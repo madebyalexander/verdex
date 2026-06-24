@@ -96,7 +96,7 @@ async function PortfolioContent() {
         {positions.length} {positions.length === 1 ? 'position' : 'positions'}
       </p>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard label="Total cost" value={usd(totalCost)} />
         <KpiCard label="Total value" value={usd(totalValue)} />
         <KpiCard
@@ -233,7 +233,7 @@ function PortfolioSkeleton() {
   return (
     <div className="flex flex-col gap-4">
       <Skeleton className="h-4 w-24" />
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {Array.from({ length: 4 }).map((_, i) => (
           <Skeleton key={i} className="h-20 rounded-xl" />
         ))}
@@ -261,7 +261,7 @@ function KpiCard({
         <p className="text-xs uppercase tracking-wide text-muted-foreground">
           {label}
         </p>
-        <p className="text-2xl font-semibold tabular-nums tracking-tight">
+        <p className="text-2xl font-semibold tabular-nums tracking-tight break-words">
           {value}
         </p>
         {chip}
