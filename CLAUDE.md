@@ -1,6 +1,6 @@
 # Verdex — Project Rules
 
-> AI-powered stock forecasting web app. Full spec: [SPEC.md](./SPEC.md).
+> AI-powered stock forecasting web app. Full reference: [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md).
 > This file is auto-loaded by Claude Code on every session. Keep it tight.
 
 ## Non-negotiable rules
@@ -22,19 +22,19 @@
 
 3. **API keys are server-only.** Use Next.js Route Handlers (`app/api/*`) as proxies for every external service. Never import a third-party SDK with a secret key from a client component. Verify no secret leaks into the client bundle.
 
-4. **Cache aggressively.** Free-tier APIs have tight rate limits. Every external call must go through Upstash Redis with the TTL specified in SPEC.md §10. A cache miss on a hot path is a bug, not a normal state.
+4. **Cache aggressively.** Free-tier APIs have tight rate limits. Every external call must go through Upstash Redis with the TTL specified in docs/ARCHITECTURE.md §10. A cache miss on a hot path is a bug, not a normal state.
 
 5. **Validate every boundary.** Use Zod schemas for: every external API response (incoming), every Route Handler input (from client), every AI JSON output. On invalid AI JSON → one retry → fallback to last cached prediction → surface error to user.
 
-6. **AI forecasts are probabilistic, not advice.** Every forecast card must display the "AI estimate — not advice" badge. Every page footer must show the financial disclaimer (SPEC.md §15). First-run modal must capture acknowledgment into `profiles.disclaimer_acked_at`.
+6. **AI forecasts are probabilistic, not advice.** Every forecast card must display the "AI estimate — not advice" badge. Every page footer must show the financial disclaimer (docs/ARCHITECTURE.md §15). First-run modal must capture acknowledgment into `profiles.disclaimer_acked_at`.
 
-7. **Tech stack is fixed** (SPEC.md §3): Next.js 16 App Router, React 19, TypeScript strict, **shadcn/ui** (`@base-ui/react` + Tailwind v4 + `class-variance-authority`), Supabase, Upstash Redis, **Google Gemini** (`@google/genai`), TanStack Query, Zustand. Charts: `recharts` (line/area/bar/pie/composed) + TradingView Lightweight Charts (OHLC/candlestick only). Toasts: `sonner`. Do not swap any of these without explicit user approval.
+7. **Tech stack is fixed** (docs/ARCHITECTURE.md §3): Next.js 16 App Router, React 19, TypeScript strict, **shadcn/ui** (`@base-ui/react` + Tailwind v4 + `class-variance-authority`), Supabase, Upstash Redis, **Google Gemini** (`@google/genai`), TanStack Query, Zustand. Charts: `recharts` (line/area/bar/pie/composed) + TradingView Lightweight Charts (OHLC/candlestick only). Toasts: `sonner`. Do not swap any of these without explicit user approval.
 
 ## Setup checklist
 
 Before any feature work:
 
-1. Verify the user has filled `.env.local` from `.env.example` (see SPEC.md §16).
+1. Verify the user has filled `.env.local` from `.env.example` (see docs/ARCHITECTURE.md §16).
 2. Run `db/schema.sql` against the Supabase project (SQL editor or `supabase db push`).
 3. Confirm shadcn/ui + Tailwind v4 are wired correctly — `npm run build` succeeds and the dashboard renders in dark mode with the purple accent.
 
@@ -47,7 +47,7 @@ Follow strictly. Mark each item complete only after it works end-to-end in the b
 1. Project scaffold: Next.js + TS + Tailwind v4 + shadcn/ui wired with dark theme hardcoded + the shadcn "Purple" preset (b4P7eq8m8) for the brand palette. ✅ Done.
 2. Supabase client + auth flow (email + Google OAuth) + `profiles` row creation on signup. ✅ Done.
 3. `/api/search?q=` proxying Finnhub `symbol_lookup` via Redis cache (15 min TTL). ✅ Done.
-4. `/api/stocks/[symbol]` returning quote + profile + logo, cached per SPEC §10. ✅ Done.
+4. `/api/stocks/[symbol]` returning quote + profile + logo, cached per ARCHITECTURE §10. ✅ Done.
 5. Stock detail page: header, chart (TradingView Lightweight Charts), key metrics grid — all in `Card`s with `Skeleton` loading states. ✅ Done.
 6. `/api/predict/[symbol]` calling Gemini with the prompt in `prompts/forecast-system.md`, validated via Zod, cached 12h in Redis + Postgres. ✅ Done.
 7. AI forecast section on detail page: three sub-cards (1w/1m/3m), confidence bar, narrative, factor chips. ✅ Done.
@@ -61,7 +61,14 @@ Do not start Phase 2 work without explicit approval; Phase 1 is complete.
 - SDK: `@google/genai` — instantiated server-side only in [lib/apis/gemini.ts](./lib/apis/gemini.ts).
 - System prompt: load from [prompts/forecast-system.md](./prompts/forecast-system.md).
 - Use Gemini's `responseSchema` for structured JSON output — do not parse free-form text. Reject and retry once on Zod validation failure, then fall back to the most recent cached `ai_predictions` row.
-- Cache key namespace: `forecast:gemini:${symbol}` (Redis) + `ai_predictions` table (Postgres). 12-hour TTL per SPEC §10.
+- Cache key namespace: `forecast:gemini:${symbol}` (Redis) + `ai_predictions` table (Postgres). 12-hour TTL per ARCHITECTURE §10.
+
+## Next.js version note
+
+This project is on **Next.js 16** — APIs, conventions, and file structure differ
+from earlier versions and may not match training data. Before writing framework
+code, consult the bundled docs in `node_modules/next/dist/docs/` and heed any
+deprecation notices. (Note: middleware lives in `proxy.ts` exporting `proxy`.)
 
 ## Verification policy
 

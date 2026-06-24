@@ -6,7 +6,7 @@ export const redis = new Redis({
 })
 
 // Cache wrapper for external API calls. Every external fetch goes through this
-// per SPEC §10 — a cache miss on a hot path is a bug, not normal state.
+// per ARCHITECTURE §10 — a cache miss on a hot path is a bug, not normal state.
 export async function cache<T>(
   key: string,
   ttlSeconds: number,

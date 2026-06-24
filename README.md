@@ -1,5 +1,12 @@
 # Verdex
 
+[![CI](https://github.com/madebyalexander/verdex/actions/workflows/ci.yml/badge.svg)](https://github.com/madebyalexander/verdex/actions/workflows/ci.yml)
+![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
+![React](https://img.shields.io/badge/React-19-149ECA?logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript)
+![Supabase](https://img.shields.io/badge/Supabase-Postgres-3FCF8E?logo=supabase)
+![License: MIT](https://img.shields.io/badge/license-MIT-green)
+
 AI-powered stock forecasting for retail investors. Verdex synthesizes technical
 indicators, fundamentals, news sentiment, analyst ratings, and insider activity
 into **probabilistic price forecasts** across three horizons (1 week, 1 month,
@@ -20,6 +27,16 @@ into **probabilistic price forecasts** across three horizons (1 week, 1 month,
 - **Portfolio** — positions with P/L and allocation breakdown.
 - **CSV export** — watchlist and portfolio (formula-injection-safe).
 - **Dark, modern UI** — shadcn/ui on Tailwind v4, purple brand accent.
+
+## Screenshots
+
+<!-- Add screenshots to docs/screenshots/ and reference them here, e.g.:
+![Dashboard](docs/screenshots/dashboard.png)
+![Stock detail with AI forecast](docs/screenshots/forecast.png)
+-->
+
+_Screenshots coming soon — run locally (see below) to preview the dashboard,
+stock detail page with AI forecast, and watchlist._
 
 ## Tech stack
 
@@ -85,14 +102,14 @@ A Husky pre-commit hook runs `lint-staged` + the test suite.
   `app/api/*` route handlers — no third-party SDK with a secret key is ever
   imported into a client component.
 - **Everything is cached.** External calls go through Upstash Redis with TTLs
-  per [`SPEC.md`](./SPEC.md) §10; routes are rate-limited per user/IP.
+  per [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) §10; routes are rate-limited per user/IP.
 - **No mock data.** Every displayed value comes from a real API; loading and
   error states are surfaced instead of placeholders.
 - **Dark mode only.** Hardcoded via `data-theme="dark"` — there is no light
   theme or theme toggle.
 
 Project conventions live in [`CLAUDE.md`](./CLAUDE.md); the full product and
-implementation spec is in [`SPEC.md`](./SPEC.md).
+implementation reference is in [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
 
 ## Security
 
@@ -102,4 +119,4 @@ security reports.
 
 ## License
 
-Proprietary — all rights reserved (update this if you intend to open-source).
+[MIT](./LICENSE) © Alexander

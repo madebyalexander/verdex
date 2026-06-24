@@ -1,8 +1,8 @@
 # Verdex — Forecast System Prompt
 
-> Load the section below `---PROMPT_START---` as the `system` parameter of the
-> Anthropic SDK call. Enable prompt caching:
-> `cache_control: { type: "ephemeral" }`.
+> Load the section below `---PROMPT_START---` as the `systemInstruction` of the
+> Gemini (`@google/genai`) call, and request structured output via
+> `responseSchema` (see `lib/apis/gemini.ts`). Implicit prompt caching applies.
 > This file is the single source of truth for the forecast prompt — update it
 > here, never inline in code.
 

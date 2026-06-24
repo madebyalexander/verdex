@@ -15,7 +15,7 @@ import { summarizeIndicators } from './indicators'
 import { callGemini, GEMINI_MODEL } from './apis/gemini'
 import { type ForecastOutput } from './zod-schemas'
 
-const FORECAST_TTL_SECONDS = 12 * 60 * 60 // SPEC §10
+const FORECAST_TTL_SECONDS = 12 * 60 * 60 // ARCHITECTURE §10
 
 const cacheKey = (symbol: string) => `forecast:gemini:${symbol}`
 

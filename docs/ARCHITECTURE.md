@@ -1,7 +1,7 @@
-# Verdex — Technical Implementation Specification
+# Verdex — Architecture & Implementation Reference
 
 > Investment-assistant web app with AI-powered stock price forecasting.
-> Single source of truth for product, architecture, and implementation.
+> Reference for product scope, architecture, data pipeline, and conventions.
 
 ---
 
@@ -398,40 +398,12 @@ Implementation: a thin `cache(key, ttl, fetcher)` wrapper in `lib/cache.ts` — 
 
 ---
 
-## 13. Implementation Phases
+## 13. Implementation Status
 
-**Phase 0 — Setup (done)**
-- ✅ `npx create-next-app@latest` with TypeScript, Tailwind v4, App Router (Next.js 16)
-- ✅ shadcn/ui initialized — components generated into [components/ui/](./components/ui/), Inter font wired, Tailwind v4 dark variant overridden in [app/globals.css](./app/globals.css)
-- ✅ Backend libs wired: [lib/supabase/client.ts](./lib/supabase/client.ts), [lib/supabase/server.ts](./lib/supabase/server.ts), [lib/supabase/admin.ts](./lib/supabase/admin.ts), [lib/apis/gemini.ts](./lib/apis/gemini.ts), [lib/cache.ts](./lib/cache.ts), [lib/ratelimit.ts](./lib/ratelimit.ts)
-- ✅ Dark theme hardcoded + shadcn "Purple" preset (`apply --preset b4P7eq8m8`) wired into [app/globals.css](./app/globals.css)
-- ⏸️ **Run `db/schema.sql` against the Supabase project** (SQL editor or `supabase db push`) — user action
-- ⏸️ Verify `npm run build` succeeds and the dashboard renders in dark mode with the purple accent
-
-**Phase 1 — MVP (1–2 weeks)**
-- Auth flow (email + Google) + `profiles` table
-- First-run disclaimer modal
-- Stock search + detail page (no AI yet)
-- Chart (TradingView Lightweight Charts) + key metrics
-- AI forecast endpoint + display (single horizon first, then expand to 3)
-- Watchlist (single per user)
-- Deploy to Vercel
-
-**Phase 2 — Expansion (1–2 weeks)**
-- Dashboard with indices + top gainers/losers
-- Stock comparison (up to 4 tickers)
-- Price alerts (web push + email via Supabase)
-- Technical indicators panel
-- News feed with sentiment
-- Analyst recommendations + insider activity tabs
-
-**Phase 3 — Polish (1 week)**
-- Portfolio tracker with P/L
-- Multiple watchlists
-- Earnings calendar
-- AI Insights daily feed
-- Mobile responsive polish
-- Sentry + analytics wiring
+Phase 1 (MVP) is complete: auth, stock search + detail page, AI forecast
+pipeline, watchlists, and price alerts. Later phases added the dashboard,
+stock comparison, news + sentiment, analyst/insider tabs, and a portfolio
+tracker. See the git history for the per-feature build order.
 
 ---
 

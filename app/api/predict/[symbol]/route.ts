@@ -58,7 +58,7 @@ export async function GET(
     }
   }
 
-  // Per-user fresh-forecast limit: 10 / hour (SPEC §11)
+  // Per-user fresh-forecast limit: 10 / hour (ARCHITECTURE §11)
   const { success } = await aiRefreshRatelimit.limit(user.id)
   if (!success) {
     return NextResponse.json(

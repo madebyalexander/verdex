@@ -11,7 +11,7 @@ function apiKey(): string {
 }
 
 // ---------------------------------------------------------------------
-// /search — symbol lookup (15 min TTL per SPEC §10)
+// /search — symbol lookup (15 min TTL per ARCHITECTURE §10)
 // ---------------------------------------------------------------------
 
 const FinnhubSearchSchema = z.object({
@@ -44,7 +44,7 @@ export async function searchSymbols(query: string): Promise<FinnhubSearchResult>
 }
 
 // ---------------------------------------------------------------------
-// /quote — real-time quote (15s TTL per SPEC §10)
+// /quote — real-time quote (15s TTL per ARCHITECTURE §10)
 // ---------------------------------------------------------------------
 
 const FinnhubQuoteSchema = z.object({
@@ -85,7 +85,7 @@ export async function getQuote(symbol: string): Promise<FinnhubQuote> {
 }
 
 // ---------------------------------------------------------------------
-// /company-news — per-symbol news (30 min TTL per SPEC §10)
+// /company-news — per-symbol news (30 min TTL per ARCHITECTURE §10)
 // ---------------------------------------------------------------------
 
 const FinnhubNewsArticleSchema = z.object({
@@ -199,7 +199,7 @@ export async function getUpcomingEarnings(
 }
 
 // ---------------------------------------------------------------------
-// /stock/recommendation — analyst buy/hold/sell trends (24h TTL per SPEC §10)
+// /stock/recommendation — analyst buy/hold/sell trends (24h TTL per ARCHITECTURE §10)
 // ---------------------------------------------------------------------
 
 const FinnhubRecommendationSchema = z.object({
@@ -239,7 +239,7 @@ export async function getRecommendations(
 }
 
 // ---------------------------------------------------------------------
-// /stock/insider-transactions — last 90d (6h TTL per SPEC §10)
+// /stock/insider-transactions — last 90d (6h TTL per ARCHITECTURE §10)
 // ---------------------------------------------------------------------
 
 const FinnhubInsiderTxSchema = z.object({
@@ -291,7 +291,7 @@ export async function getInsiderTransactions(
 }
 
 // ---------------------------------------------------------------------
-// /stock/metric — fundamentals (24h TTL per SPEC §10)
+// /stock/metric — fundamentals (24h TTL per ARCHITECTURE §10)
 // Returns ~100 raw fields. We pass the whole object to Claude and let it
 // pick what informs the forecast.
 // ---------------------------------------------------------------------
@@ -369,7 +369,7 @@ export async function getProfile(symbol: string): Promise<FinnhubProfile> {
     }
     const profile = FinnhubProfileSchema.parse(raw)
 
-    // Mirror to Postgres for durability (SPEC §10). Failure here is logged
+    // Mirror to Postgres for durability (ARCHITECTURE §10). Failure here is logged
     // but doesn't break the Redis cache write or the user response.
     const { error: upsertError } = await supabaseAdmin
       .from('stock_metadata')
