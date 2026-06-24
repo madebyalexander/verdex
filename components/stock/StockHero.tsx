@@ -23,7 +23,7 @@ export function StockHero({
 }) {
   return (
     <header className="my-0 flex flex-col gap-10 py-0">
-      <div className="my-0 flex flex-row items-center justify-center gap-3">
+      <div className="my-0 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-center sm:gap-3">
         <div className="flex min-w-0 flex-1 items-center gap-3">
           {logo ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -70,7 +70,7 @@ export function StockHero({
           </div>
         </div>
 
-        <div className="my-0 flex shrink-0 flex-row items-center justify-center gap-3">
+        <div className="my-0 flex shrink-0 flex-row items-center justify-between gap-3 sm:justify-center">
           <div className="flex flex-row items-end justify-start gap-3">
             <span className="text-xl font-semibold tabular-nums tracking-tight leading-none sm:text-2xl">
               {usd(quote.c)}

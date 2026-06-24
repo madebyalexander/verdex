@@ -103,20 +103,19 @@ export async function AnalystSection({ symbol }: { symbol: string }) {
           })}
         </div>
 
-        <div className="grid grid-cols-5 gap-2 text-xs">
+        <div className="grid grid-cols-5 gap-1.5 text-xs">
           {BUCKETS.map(({ key, label, color }) => (
-            <div key={key} className="flex flex-col items-center gap-1">
-              <div className="flex items-center gap-1.5">
-                <span
-                  aria-hidden
-                  className="w-2 h-2 rounded-sm shrink-0"
-                  style={{ background: color }}
-                />
-                <span className="truncate text-muted-foreground">{label}</span>
-              </div>
-              <span className="font-semibold tabular-nums">
-                {current[key]}
-              </span>
+            <div
+              key={key}
+              className="flex flex-col items-center gap-1 text-center"
+            >
+              <span
+                aria-hidden
+                className="size-2 shrink-0 rounded-sm"
+                style={{ background: color }}
+              />
+              <span className="leading-tight text-muted-foreground">{label}</span>
+              <span className="font-semibold tabular-nums">{current[key]}</span>
             </div>
           ))}
         </div>

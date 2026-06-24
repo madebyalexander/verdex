@@ -23,7 +23,7 @@ export function PageHeader({
               className="size-5 text-muted-foreground shrink-0"
             />
           )}
-          <h1 className="text-2xl font-semibold tracking-tight leading-tight truncate">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight leading-tight line-clamp-2">
             {title}
           </h1>
         </div>
