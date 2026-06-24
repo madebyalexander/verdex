@@ -16,3 +16,12 @@ export const aiRefreshRatelimit = new Ratelimit({
   prefix: 'rl:ai-refresh',
   analytics: true,
 })
+
+// Auth endpoints (login, signup, password reset, resend): 10 attempts / 10 min
+// per IP — slows credential stuffing without locking out normal users.
+export const authRatelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(10, '10 m'),
+  prefix: 'rl:auth',
+  analytics: true,
+})

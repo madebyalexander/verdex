@@ -10,7 +10,12 @@ import {
 import { LoginForm } from '@/components/auth/LoginForm'
 import { GoogleButton } from '@/components/auth/GoogleButton'
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>
+}) {
+  const { next } = await searchParams
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
@@ -18,7 +23,7 @@ export default function LoginPage() {
         <CardDescription>Sign in to continue to your dashboard.</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
-        <LoginForm />
+        <LoginForm next={next} />
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <span className="h-px flex-1 bg-border" />
           or

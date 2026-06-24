@@ -34,6 +34,8 @@ export async function proxy(request: NextRequest) {
   const isAuthPage = path === '/login' || path === '/signup'
   const isPublic =
     isAuthPage ||
+    path === '/forgot-password' ||
+    path === '/update-password' ||
     path.startsWith('/auth/') ||
     path.startsWith('/api/') ||
     path === '/'
@@ -41,6 +43,9 @@ export async function proxy(request: NextRequest) {
   if (!user && !isPublic) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
+    url.search = ''
+    // Preserve where the user was headed so we can return them after login.
+    url.searchParams.set('next', path)
     return NextResponse.redirect(url)
   }
 

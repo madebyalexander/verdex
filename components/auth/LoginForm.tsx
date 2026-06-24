@@ -1,21 +1,21 @@
 'use client'
 
 import { useActionState } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import {
-  signInWithPassword,
-  type AuthFormState,
-} from '@/app/auth/actions'
-import { cn } from '@/lib/utils'
+import { PasswordInput } from '@/components/auth/PasswordInput'
+import { Field, Alert } from '@/components/auth/fields'
+import { signInWithPassword, type AuthFormState } from '@/app/auth/actions'
 
 const initial: AuthFormState = {}
 
-export function LoginForm() {
+export function LoginForm({ next }: { next?: string }) {
   const [state, action, pending] = useActionState(signInWithPassword, initial)
 
   return (
     <form action={action} className="flex flex-col gap-4">
+      <input type="hidden" name="next" value={next ?? ''} />
       <Field id="email" label="Email">
         <Input
           id="email"
@@ -26,11 +26,21 @@ export function LoginForm() {
           required
         />
       </Field>
-      <Field id="password" label="Password">
-        <Input
+      <Field
+        id="password"
+        label="Password"
+        action={
+          <Link
+            href="/forgot-password"
+            className="text-xs text-primary underline underline-offset-2"
+          >
+            Forgot password?
+          </Link>
+        }
+      >
+        <PasswordInput
           id="password"
           name="password"
-          type="password"
           autoComplete="current-password"
           placeholder="••••••••"
           required
@@ -41,47 +51,5 @@ export function LoginForm() {
         {pending ? 'Signing in…' : 'Sign in'}
       </Button>
     </form>
-  )
-}
-
-function Field({
-  id,
-  label,
-  children,
-}: {
-  id: string
-  label: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-medium">
-        {label}
-      </label>
-      {children}
-    </div>
-  )
-}
-
-function Alert({
-  tone,
-  children,
-}: {
-  tone: 'danger' | 'accent'
-  children: React.ReactNode
-}) {
-  return (
-    <div
-      role={tone === 'danger' ? 'alert' : 'status'}
-      className={cn(
-        'rounded-md p-3 text-sm ring-1 ring-inset',
-        tone === 'danger' &&
-          'bg-rose-500/10 text-rose-400 ring-rose-500/20',
-        tone === 'accent' &&
-          'bg-primary/10 text-primary ring-primary/20'
-      )}
-    >
-      {children}
-    </div>
   )
 }

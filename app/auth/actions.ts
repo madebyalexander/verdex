@@ -1,15 +1,60 @@
 'use server'
 
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
+import { authRatelimit } from '@/lib/ratelimit'
 
 const CredentialsSchema = z.object({
   email: z.email(),
   password: z.string().min(8, 'Password must be at least 8 characters'),
 })
 
-export type AuthFormState = { error?: string; info?: string }
+const PasswordSchema = z.string().min(8, 'Password must be at least 8 characters')
+
+export type AuthFormState = { error?: string; info?: string; email?: string }
+
+const TOO_MANY = 'Too many attempts. Please try again in a few minutes.'
+
+// --- helpers ---------------------------------------------------------------
+
+/** Best-effort client IP for rate limiting. */
+async function clientIp(): Promise<string> {
+  const h = await headers()
+  return (
+    h.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    h.get('x-real-ip') ||
+    'anonymous'
+  )
+}
+
+/**
+ * Per-IP throttle for auth actions. Fails OPEN if the limiter is unavailable so
+ * a Redis hiccup can never lock everyone out of sign-in.
+ */
+async function authRateLimitOk(): Promise<boolean> {
+  try {
+    const { success } = await authRatelimit.limit(await clientIp())
+    return success
+  } catch {
+    return true
+  }
+}
+
+/** Absolute app URL for email redirect links (or undefined in unconfigured envs). */
+function appUrl(path: string): string | undefined {
+  const base = process.env.NEXT_PUBLIC_APP_URL
+  return base ? `${base}${path}` : undefined
+}
+
+/** Only allow same-site relative paths as post-auth destinations (no open redirects). */
+function safeNext(value: FormDataEntryValue | null): string {
+  const next = typeof value === 'string' ? value : ''
+  return next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard'
+}
+
+// --- actions ---------------------------------------------------------------
 
 export async function signInWithPassword(
   _prev: AuthFormState,
@@ -22,12 +67,13 @@ export async function signInWithPassword(
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? 'Invalid credentials' }
   }
+  if (!(await authRateLimitOk())) return { error: TOO_MANY }
 
   const supabase = await createClient()
   const { error } = await supabase.auth.signInWithPassword(parsed.data)
   if (error) return { error: error.message }
 
-  redirect('/dashboard')
+  redirect(safeNext(formData.get('next')))
 }
 
 export async function signUpWithPassword(
@@ -41,16 +87,15 @@ export async function signUpWithPassword(
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? 'Invalid credentials' }
   }
+  if (formData.get('password') !== formData.get('confirmPassword')) {
+    return { error: 'Passwords do not match.', email: parsed.data.email }
+  }
+  if (!(await authRateLimitOk())) return { error: TOO_MANY }
 
   const supabase = await createClient()
   const { data, error } = await supabase.auth.signUp({
     ...parsed.data,
-    options: {
-      emailRedirectTo:
-        process.env.NEXT_PUBLIC_APP_URL
-          ? `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`
-          : undefined,
-    },
+    options: { emailRedirectTo: appUrl('/auth/callback') },
   })
   if (error) return { error: error.message }
 
@@ -67,7 +112,79 @@ export async function signUpWithPassword(
   // If the project has email confirmation enabled, no session is created
   // and the user must click the link before signing in.
   if (data.session) redirect('/dashboard')
-  return { info: 'Check your email to confirm your account.' }
+  return {
+    info: 'Check your email to confirm your account.',
+    email: parsed.data.email,
+  }
+}
+
+export async function resendConfirmation(
+  _prev: AuthFormState,
+  formData: FormData
+): Promise<AuthFormState> {
+  const email = z.email().safeParse(formData.get('email'))
+  if (!email.success) return { error: 'Enter a valid email address.' }
+  if (!(await authRateLimitOk())) return { error: TOO_MANY }
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email: email.data,
+    options: { emailRedirectTo: appUrl('/auth/callback') },
+  })
+  if (error) return { error: error.message, email: email.data }
+  return {
+    info: 'Confirmation email resent — check your inbox.',
+    email: email.data,
+  }
+}
+
+export async function requestPasswordReset(
+  _prev: AuthFormState,
+  formData: FormData
+): Promise<AuthFormState> {
+  const email = z.email().safeParse(formData.get('email'))
+  if (!email.success) return { error: 'Enter a valid email address.' }
+  if (!(await authRateLimitOk())) return { error: TOO_MANY }
+
+  const supabase = await createClient()
+  // The recovery link lands on the callback, which establishes a session and
+  // forwards to /update-password.
+  await supabase.auth.resetPasswordForEmail(email.data, {
+    redirectTo: appUrl('/auth/callback?next=/update-password'),
+  })
+  // Generic response regardless of whether the email exists (no enumeration).
+  return {
+    info: 'If an account exists for that email, a password reset link is on its way.',
+  }
+}
+
+export async function updatePassword(
+  _prev: AuthFormState,
+  formData: FormData
+): Promise<AuthFormState> {
+  const parsed = PasswordSchema.safeParse(formData.get('password'))
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Invalid password' }
+  }
+  if (formData.get('password') !== formData.get('confirmPassword')) {
+    return { error: 'Passwords do not match.' }
+  }
+
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return {
+      error: 'Your reset link is invalid or has expired. Request a new one.',
+    }
+  }
+
+  const { error } = await supabase.auth.updateUser({ password: parsed.data })
+  if (error) return { error: error.message }
+
+  redirect('/dashboard')
 }
 
 export async function signOut() {
