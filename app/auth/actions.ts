@@ -54,6 +54,16 @@ export async function signUpWithPassword(
   })
   if (error) return { error: error.message }
 
+  // With email confirmation enabled, signing up an *existing* email returns a
+  // success-shaped response with an empty `identities` array (Supabase does this
+  // to avoid leaking which emails are registered). Detect it so we don't tell a
+  // returning user to "check your email" for a confirmation that won't be sent.
+  if (data.user && data.user.identities && data.user.identities.length === 0) {
+    return {
+      error: 'An account with this email already exists. Try logging in instead.',
+    }
+  }
+
   // If the project has email confirmation enabled, no session is created
   // and the user must click the link before signing in.
   if (data.session) redirect('/dashboard')
