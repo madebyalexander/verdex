@@ -3,11 +3,16 @@ import { notFound } from 'next/navigation'
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { ChangeBadge } from '@/components/ui/change-badge'
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs'
 import {
   getQuote,
   getProfile,
@@ -27,12 +32,19 @@ import { InsiderSection } from '@/components/stock/InsiderSection'
 import { InsiderSkeleton } from '@/components/stock/InsiderSkeleton'
 import { IndicatorsSection } from '@/components/stock/IndicatorsSection'
 import { IndicatorsSkeleton } from '@/components/stock/IndicatorsSkeleton'
+import { EarningsSection } from '@/components/stock/EarningsSection'
+import { EarningsSkeleton } from '@/components/stock/EarningsSkeleton'
+import { StockHero } from '@/components/stock/StockHero'
+import { QuickStatsStrip } from '@/components/stock/QuickStatsStrip'
+import { QuickStatsStripSkeleton } from '@/components/stock/QuickStatsStripSkeleton'
 import { checkInWatchlist } from '@/lib/watchlist'
-import { WatchlistToggleButton } from '@/components/watchlist/WatchlistToggleButton'
-import { CreateAlertButton } from '@/components/alerts/CreateAlertButton'
+import { readPreferences } from '@/lib/preferences.server'
 import { TriggeredAlerts } from '@/components/alerts/TriggeredAlerts'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { CardStack } from '@/components/layout/CardStack'
 
-import { usd, compactUsd, compactNum } from '@/lib/format'
+import { compactUsd, compactNum } from '@/lib/format'
+import { IoSparkles as Sparks } from 'react-icons/io5'
 
 function resolveLogo(profile: FinnhubProfile): string | null {
   if (profile.logo && profile.logo.length > 0) return profile.logo
@@ -69,159 +81,149 @@ export default async function StockDetailPage({
   }
 
   const isInWatchlist = await checkInWatchlist(symbol)
+  const prefs = await readPreferences()
 
   const logo = resolveLogo(profile)
   const marketCapUsd = (profile.marketCapitalization ?? 0) * 1_000_000
   const sharesOutCount = (profile.shareOutstanding ?? 0) * 1_000_000
 
   return (
-    <main className="p-6 max-w-4xl mx-auto flex flex-col gap-4">
+    <PageContainer>
       <TriggeredAlerts symbol={symbol} currentPrice={quote.c} />
 
-      <Card>
-        <CardContent className="flex flex-col gap-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              {logo && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={logo}
-                  alt={`${profile.name} logo`}
-                  width={48}
-                  height={48}
-                  loading="lazy"
-                  decoding="async"
-                  className="rounded-md object-contain shrink-0 bg-secondary"
-                />
-              )}
-              <div className="flex flex-col gap-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-xl font-semibold tracking-tight">
-                    {profile.name}
-                  </h1>
-                  {profile.finnhubIndustry && (
-                    <Badge variant="secondary">
-                      {profile.finnhubIndustry}
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {symbol}
-                  {profile.exchange && ` · ${profile.exchange}`}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <CreateAlertButton symbol={symbol} currentPrice={quote.c} />
-              <WatchlistToggleButton
-                symbol={symbol}
-                initialIn={isInWatchlist}
-              />
-            </div>
-          </div>
-
-          <div className="flex items-baseline gap-3 flex-wrap">
-            <span className="text-3xl font-semibold tabular-nums tracking-tight">
-              {usd(quote.c)}
-            </span>
-            <ChangeBadge pct={quote.dp} />
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Stat label="Open" value={usd(quote.o)} />
-        <Stat label="High" value={usd(quote.h)} />
-        <Stat label="Low" value={usd(quote.l)} />
-        <Stat label="Prev close" value={usd(quote.pc)} />
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Company</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-3 text-sm">
-          {!!profile.marketCapitalization && (
-            <Detail label="Market cap" value={compactUsd(marketCapUsd)} />
-          )}
-          {!!profile.shareOutstanding && (
-            <Detail
-              label="Shares outstanding"
-              value={compactNum(sharesOutCount)}
+      <StockHero
+        symbol={symbol}
+        profile={profile}
+        quote={quote}
+        logo={logo}
+        isInWatchlist={isInWatchlist}
+        quickStats={
+          <Suspense fallback={<QuickStatsStripSkeleton />}>
+            <QuickStatsStrip
+              symbol={symbol}
+              quote={quote}
+              marketCapUsd={marketCapUsd}
             />
-          )}
-          {profile.country && (
-            <Detail label="Country" value={profile.country} />
-          )}
-          {profile.currency && (
-            <Detail label="Currency" value={profile.currency} />
-          )}
-          {profile.ipo && <Detail label="IPO" value={profile.ipo} />}
-          {profile.weburl && (
-            <Detail
-              label="Website"
-              value={
-                <a
-                  href={profile.weburl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-primary underline underline-offset-2"
-                >
-                  {(() => {
-                    try {
-                      return new URL(profile.weburl).hostname.replace(
-                        /^www\./,
-                        ''
-                      )
-                    } catch {
-                      return profile.weburl
-                    }
-                  })()}
-                </a>
-              }
-            />
-          )}
-        </CardContent>
-      </Card>
+          </Suspense>
+        }
+      />
 
       <Suspense fallback={<PriceChartSkeleton />}>
         <PriceChartSection symbol={symbol} />
       </Suspense>
 
-      <Suspense fallback={<IndicatorsSkeleton />}>
-        <IndicatorsSection symbol={symbol} />
-      </Suspense>
+      <Tabs defaultValue="forecast">
+          <TabsList className="self-start">
+            <TabsTrigger
+              value="forecast"
+              className="data-active:text-primary"
+            >
+              <Sparks aria-hidden className="size-3.5" />
+              <span>AI Forecast</span>
+            </TabsTrigger>
+            <TabsTrigger value="analysis" className="simple:hidden">
+              Analysis
+            </TabsTrigger>
+            <TabsTrigger value="news">News</TabsTrigger>
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+          </TabsList>
 
-      <Suspense fallback={<ForecastSkeleton />}>
-        <ForecastSection symbol={symbol} />
-      </Suspense>
+          <p className="technical:hidden -mt-1 text-xs text-muted-foreground">
+            Switch to <span className="font-medium text-foreground">Technical</span>{' '}
+            mode (top right) for indicators, analyst ratings, insider activity &
+            earnings.
+          </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Suspense fallback={<AnalystSkeleton />}>
-          <AnalystSection symbol={symbol} />
-        </Suspense>
-        <Suspense fallback={<InsiderSkeleton />}>
-          <InsiderSection symbol={symbol} />
-        </Suspense>
-      </div>
+          <TabsContent value="forecast">
+            <Suspense fallback={<ForecastSkeleton />}>
+              <ForecastSection
+                symbol={symbol}
+                preferredHorizon={prefs.default_forecast_horizon}
+                riskProfile={prefs.risk_profile}
+              />
+            </Suspense>
+          </TabsContent>
 
-      <Suspense fallback={<NewsSkeleton />}>
-        <NewsSection symbol={symbol} />
-      </Suspense>
-    </main>
-  )
-}
+          <TabsContent value="analysis" className="simple:hidden">
+            <CardStack>
+              <Suspense fallback={<IndicatorsSkeleton />}>
+                <IndicatorsSection symbol={symbol} />
+              </Suspense>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Suspense fallback={<AnalystSkeleton />}>
+                  <AnalystSection symbol={symbol} />
+                </Suspense>
+                <Suspense fallback={<InsiderSkeleton />}>
+                  <InsiderSection symbol={symbol} />
+                </Suspense>
+              </div>
+              <Suspense fallback={<EarningsSkeleton />}>
+                <EarningsSection symbol={symbol} />
+              </Suspense>
+            </CardStack>
+          </TabsContent>
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <Card>
-      <CardContent>
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-          {label}
-        </p>
-        <p className="text-lg font-semibold tabular-nums mt-1">{value}</p>
-      </CardContent>
-    </Card>
+          <TabsContent value="news">
+            <Suspense fallback={<NewsSkeleton />}>
+              <NewsSection symbol={symbol} />
+            </Suspense>
+          </TabsContent>
+
+          <TabsContent value="profile">
+            <Card>
+              <CardHeader>
+                <CardTitle>Company</CardTitle>
+                <CardDescription>Profile data from Finnhub</CardDescription>
+              </CardHeader>
+              <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-3 text-sm">
+                {!!profile.marketCapitalization && (
+                  <Detail
+                    label="Market cap"
+                    value={compactUsd(marketCapUsd)}
+                  />
+                )}
+                {!!profile.shareOutstanding && (
+                  <Detail
+                    label="Shares outstanding"
+                    value={compactNum(sharesOutCount)}
+                  />
+                )}
+                {profile.country && (
+                  <Detail label="Country" value={profile.country} />
+                )}
+                {profile.currency && (
+                  <Detail label="Currency" value={profile.currency} />
+                )}
+                {profile.ipo && <Detail label="IPO" value={profile.ipo} />}
+                {profile.weburl && (
+                  <Detail
+                    label="Website"
+                    value={
+                      <a
+                        href={profile.weburl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-primary underline underline-offset-2"
+                      >
+                        {(() => {
+                          try {
+                            return new URL(profile.weburl).hostname.replace(
+                              /^www\./,
+                              ''
+                            )
+                          } catch {
+                            return profile.weburl
+                          }
+                        })()}
+                      </a>
+                    }
+                  />
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+    </PageContainer>
   )
 }
 

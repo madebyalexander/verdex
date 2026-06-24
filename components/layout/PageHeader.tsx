@@ -1,4 +1,6 @@
-import type { LucideIcon } from 'lucide-react'
+import type { ComponentType, SVGProps } from 'react'
+
+type IconComponent = ComponentType<SVGProps<SVGSVGElement>>
 
 export function PageHeader({
   icon: Icon,
@@ -6,32 +8,30 @@ export function PageHeader({
   description,
   action,
 }: {
-  icon?: LucideIcon
+  icon?: IconComponent
   title: React.ReactNode
   description?: React.ReactNode
   action?: React.ReactNode
 }) {
   return (
     <header className="flex items-start justify-between gap-4 flex-wrap">
-      <div className="flex items-start gap-3 min-w-0">
-        {Icon && (
-          <span
-            aria-hidden
-            className="inline-flex items-center justify-center size-9 rounded-lg bg-primary/10 text-primary shrink-0"
-          >
-            <Icon className="size-5" />
-          </span>
-        )}
-        <div className="flex flex-col gap-1 min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight leading-tight">
+      <div className="flex flex-col gap-1 min-w-0">
+        <div className="flex items-center gap-2.5 min-w-0">
+          {Icon && (
+            <Icon
+              aria-hidden
+              className="size-5 text-muted-foreground shrink-0"
+            />
+          )}
+          <h1 className="text-2xl font-semibold tracking-tight leading-tight truncate">
             {title}
           </h1>
-          {description && (
-            <p className="text-sm text-muted-foreground">{description}</p>
-          )}
         </div>
+        {description && (
+          <p className="text-sm text-muted-foreground">{description}</p>
+        )}
       </div>
-      {action && <div className="shrink-0">{action}</div>}
+      {action && <div className="shrink-0 flex items-center gap-2">{action}</div>}
     </header>
   )
 }

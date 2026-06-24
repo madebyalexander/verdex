@@ -1,53 +1,104 @@
+'use client'
+
+import { useEffect, useRef, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { ChangeBadge } from '@/components/ui/change-badge'
-import { getQuote } from '@/lib/apis/finnhub'
-import { usd } from '@/lib/format'
+import {
+  MarketTableHeader,
+  StockRow,
+  StockSkeletonRows,
+} from '@/components/market/market-table'
+import {
+  MARKET_SECTORS,
+  DEFAULT_MARKET_SECTOR,
+  WATCHLIST_KEY,
+  type MarketStock,
+} from '@/lib/market-universe'
+import { cn } from '@/lib/utils'
+import { IoStar as Star } from 'react-icons/io5'
 
-const INDICES = [
-  { symbol: 'SPY', label: 'S&P 500' },
-  { symbol: 'QQQ', label: 'NASDAQ-100' },
-  { symbol: 'DIA', label: 'Dow Jones' },
-  { symbol: 'IWM', label: 'Russell 2000' },
-] as const
+export function MarketOverview({ initialSector }: { initialSector?: string }) {
+  const [sector, setSector] = useState(initialSector ?? DEFAULT_MARKET_SECTOR)
+  const [stocks, setStocks] = useState<MarketStock[] | null>(null)
+  const [loading, setLoading] = useState(true)
+  const cache = useRef<Map<string, MarketStock[]>>(new Map())
+  const reqId = useRef(0)
 
-export async function MarketOverview() {
-  const quotes = await Promise.all(
-    INDICES.map(async ({ symbol, label }) => {
-      try {
-        const quote = await getQuote(symbol)
-        return { symbol, label, quote, error: false as const }
-      } catch {
-        return { symbol, label, quote: null, error: true as const }
-      }
-    })
-  )
+  useEffect(() => {
+    const myReq = ++reqId.current
+    const cached = cache.current.get(sector)
+    if (cached) {
+      setStocks(cached)
+      setLoading(false)
+      return
+    }
+    setLoading(true)
+    fetch(`/api/market?sector=${encodeURIComponent(sector)}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then((data: { stocks: MarketStock[] }) => {
+        if (myReq !== reqId.current) return
+        cache.current.set(sector, data.stocks)
+        setStocks(data.stocks)
+      })
+      .catch(() => {
+        if (myReq === reqId.current) setStocks([])
+      })
+      .finally(() => {
+        if (myReq === reqId.current) setLoading(false)
+      })
+  }, [sector])
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-      {quotes.map(({ symbol, label, quote, error }) => (
-        <Card key={symbol}>
-          <CardContent className="flex flex-col gap-3">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className="text-sm font-medium truncate">{label}</p>
-                <p className="text-xs text-muted-foreground tabular-nums">
-                  {symbol}
-                </p>
-              </div>
-              {!error && quote && (
-                <ChangeBadge pct={quote.dp} />
+    <div className="flex flex-col gap-3">
+      {/* Watchlist + sector filter chips */}
+      <div className="flex flex-wrap gap-1.5">
+        {[WATCHLIST_KEY, ...MARKET_SECTORS].map((s) => {
+          const active = s === sector
+          const isWatchlist = s === WATCHLIST_KEY
+          return (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setSector(s)}
+              aria-pressed={active}
+              className={cn(
+                'inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-xs font-medium ring-1 ring-inset transition-colors',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+                active
+                  ? 'bg-primary/10 text-primary ring-primary/30'
+                  : 'bg-secondary text-muted-foreground ring-border hover:bg-secondary/70 hover:text-foreground'
               )}
-            </div>
-            {error || !quote ? (
-              <p className="text-sm text-muted-foreground">Unavailable</p>
-            ) : (
-              <p className="text-2xl font-semibold tabular-nums tracking-tight">
-                {usd(quote.c)}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      ))}
+            >
+              {isWatchlist && <Star aria-hidden className="size-3" />}
+              {s}
+            </button>
+          )
+        })}
+      </div>
+
+      <Card variant="list">
+        <CardContent className="px-0">
+          {/* Column header — same grid as the rows */}
+          <MarketTableHeader />
+
+          {loading || stocks === null ? (
+            <StockSkeletonRows />
+          ) : stocks.length === 0 ? (
+            <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+              {sector === WATCHLIST_KEY
+                ? 'Your watchlist is empty. Add stocks from any detail page, or pick a sector above.'
+                : `Couldn't load ${sector} stocks. Try another sector.`}
+            </p>
+          ) : (
+            <ul className="divide-y divide-border border-t border-border">
+              {stocks.map((stock) => (
+                <li key={stock.symbol}>
+                  <StockRow stock={stock} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

@@ -5,11 +5,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { CardStack } from '@/components/layout/CardStack'
 import { Skeleton } from '@/components/ui/skeleton'
 
 export function CompareSkeleton() {
   return (
-    <div className="flex flex-col gap-4">
+    <CardStack>
       <Card>
         <CardHeader>
           <CardTitle>Overlay chart</CardTitle>
@@ -29,6 +30,6 @@ export function CompareSkeleton() {
           ))}
         </CardContent>
       </Card>
-    </div>
+    </CardStack>
   )
 }

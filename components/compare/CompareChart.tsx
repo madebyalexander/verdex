@@ -7,6 +7,7 @@ import {
   ColorType,
   type IChartApi,
 } from 'lightweight-charts'
+import { readCssColor } from '@/lib/css-color'
 
 export type CompareSeries = {
   symbol: string
@@ -20,10 +21,8 @@ export function CompareChart({ series }: { series: CompareSeries[] }) {
   useEffect(() => {
     if (!containerRef.current) return
 
-    const styles = getComputedStyle(document.documentElement)
-    const fg = styles.getPropertyValue('--foreground').trim() || '#fafafa'
-    const muted =
-      styles.getPropertyValue('--muted-foreground').trim() || '#a1a1aa'
+    const fg = readCssColor('--foreground', '#fafafa')
+    const muted = readCssColor('--muted-foreground', '#a1a1aa')
 
     const chart: IChartApi = createChart(containerRef.current, {
       width: containerRef.current.clientWidth,

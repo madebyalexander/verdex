@@ -1,11 +1,12 @@
 import Link from 'next/link'
-import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { StockLogo } from '@/components/ui/stock-logo'
+import { IoClose as Xmark } from 'react-icons/io5'
 
 /**
- * Compact pill showing a stock symbol with a letter-tile "icon" + text.
- * Used wherever the app needs to list tickers in a minimized form
- * (compare chips, news article tags, popular-list shortcuts, etc.).
+ * Compact pill showing a stock symbol with its real company logo (letter-tile
+ * fallback) + ticker text. Used wherever the app lists tickers in a minimized
+ * form (compare chips, news article tags, popular-list shortcuts, etc.).
  */
 export function SymbolBadge({
   symbol,
@@ -35,7 +36,7 @@ export function SymbolBadge({
   const inner = (
     <span
       className={cn(
-        'inline-flex items-center rounded-md ring-1 ring-inset transition-colors',
+        'inline-flex w-fit items-center rounded-md ring-1 ring-inset transition-colors',
         sizing,
         active
           ? 'bg-primary/10 text-primary ring-primary/30'
@@ -43,15 +44,7 @@ export function SymbolBadge({
         className
       )}
     >
-      <span
-        aria-hidden
-        className={cn(
-          'inline-flex items-center justify-center rounded-sm font-semibold uppercase shrink-0 bg-primary/15 text-primary',
-          tileSize
-        )}
-      >
-        {symbol.slice(0, 1)}
-      </span>
+      <StockLogo symbol={symbol} className={cn('rounded-sm', tileSize)} />
       <span className="font-medium tabular-nums">{symbol}</span>
       {onRemove && (
         <button
@@ -64,7 +57,7 @@ export function SymbolBadge({
           aria-label={`Remove ${symbol}`}
           className="inline-flex items-center justify-center size-4 rounded-sm hover:bg-foreground/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
         >
-          <X aria-hidden className="size-3" />
+          <Xmark aria-hidden className="size-3" />
         </button>
       )}
     </span>

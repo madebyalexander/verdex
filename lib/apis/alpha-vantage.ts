@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { cache } from '@/lib/cache'
+import { redis } from '@/lib/cache'
 
 const ALPHA_VANTAGE_BASE = 'https://www.alphavantage.co/query'
 
@@ -40,51 +40,113 @@ export class AlphaVantageError extends Error {
   }
 }
 
-// 1h TTL — daily bars don't change often, but today's bar still updates during
-// market hours. SPEC §10 spec'd 1h for technical indicators; same here.
-const DAILY_TTL_SECONDS = 60 * 60
+/**
+ * Thrown specifically when the Alpha Vantage free-tier daily quota (25/day)
+ * is exhausted and we have no stale fallback data. Consumers should render
+ * a friendly "try again later" state rather than the raw API message.
+ */
+export class AlphaVantageRateLimitError extends AlphaVantageError {
+  constructor() {
+    super(
+      "Alpha Vantage's free-tier daily quota is exhausted. Charts and indicators will resume tomorrow."
+    )
+    this.name = 'AlphaVantageRateLimitError'
+  }
+}
+
+// Fresh hits are good for 1 hour. After that we re-fetch — but if the API is
+// rate-limited we serve from a longer-lived stale cache.
+const FRESH_TTL_SECONDS = 60 * 60
+const STALE_TTL_SECONDS = 60 * 60 * 24 * 7
+// Once we detect a rate-limit, refuse to hit Alpha Vantage again for an hour.
+// This stops the app from burning every page load on quota-exhausted responses
+// (which Alpha Vantage still counts against the daily limit).
+const RATELIMIT_BACKOFF_SECONDS = 60 * 60
+const RATELIMIT_FLAG_KEY = 'av:ratelimited'
+
+function freshKey(symbol: string) {
+  return `av:daily:fresh:${symbol}`
+}
+function staleKey(symbol: string) {
+  return `av:daily:stale:${symbol}`
+}
 
 export async function getDailyOhlcv(symbol: string): Promise<OhlcvBar[]> {
-  return cache(`av:daily:${symbol}`, DAILY_TTL_SECONDS, async () => {
-    const url = new URL(ALPHA_VANTAGE_BASE)
-    url.searchParams.set('function', 'TIME_SERIES_DAILY')
-    url.searchParams.set('symbol', symbol)
-    url.searchParams.set('outputsize', 'compact') // ~100 most recent days
-    url.searchParams.set('apikey', apiKey())
+  // 1. Fresh cache hit — happy path.
+  const fresh = await redis.get<OhlcvBar[]>(freshKey(symbol))
+  if (fresh && fresh.length > 0) return fresh
 
-    const res = await fetch(url, { cache: 'no-store' })
-    if (!res.ok) {
-      throw new AlphaVantageError(`Alpha Vantage ${res.status}`)
-    }
-    const parsed = DailyResponseSchema.parse(await res.json())
+  // 2. If a recent call hit the rate limit, skip Alpha Vantage entirely and
+  //    serve stale data if we have any. Avoids re-burning quota responses.
+  const rateLimited = await redis.get<string>(RATELIMIT_FLAG_KEY)
+  if (rateLimited) {
+    const stale = await redis.get<OhlcvBar[]>(staleKey(symbol))
+    if (stale && stale.length > 0) return stale
+    throw new AlphaVantageRateLimitError()
+  }
 
-    // Alpha Vantage returns 200 OK with these fields on error/rate limit
-    if (parsed['Error Message']) {
-      throw new AlphaVantageError(parsed['Error Message'])
+  // 3. Try a fresh fetch.
+  let bars: OhlcvBar[]
+  try {
+    bars = await fetchDailyFromAlphaVantage(symbol)
+  } catch (err) {
+    if (err instanceof AlphaVantageRateLimitError) {
+      // Set the global backoff flag and try to serve stale.
+      await redis.set(RATELIMIT_FLAG_KEY, '1', {
+        ex: RATELIMIT_BACKOFF_SECONDS,
+      })
+      const stale = await redis.get<OhlcvBar[]>(staleKey(symbol))
+      if (stale && stale.length > 0) return stale
+      throw err
     }
-    if (parsed.Note || parsed.Information) {
-      throw new AlphaVantageError(
-        parsed.Note ??
-          parsed.Information ??
-          'Alpha Vantage rate limit hit (25/day, 5/min on free tier)'
-      )
-    }
-    const series = parsed['Time Series (Daily)']
-    if (!series) {
-      throw new AlphaVantageError('No time series data returned')
-    }
+    throw err
+  }
 
-    const bars: OhlcvBar[] = Object.entries(series)
-      .map(([date, bar]) => ({
-        time: date,
-        open: parseFloat(bar['1. open']),
-        high: parseFloat(bar['2. high']),
-        low: parseFloat(bar['3. low']),
-        close: parseFloat(bar['4. close']),
-        volume: parseInt(bar['5. volume'], 10),
-      }))
-      .sort((a, b) => a.time.localeCompare(b.time)) // ascending — required by lightweight-charts
+  // 4. Cache primary (1h) and refresh stale (7d).
+  await Promise.all([
+    redis.set(freshKey(symbol), bars, { ex: FRESH_TTL_SECONDS }),
+    redis.set(staleKey(symbol), bars, { ex: STALE_TTL_SECONDS }),
+  ])
+  return bars
+}
 
-    return bars
-  })
+async function fetchDailyFromAlphaVantage(
+  symbol: string
+): Promise<OhlcvBar[]> {
+  const url = new URL(ALPHA_VANTAGE_BASE)
+  url.searchParams.set('function', 'TIME_SERIES_DAILY')
+  url.searchParams.set('symbol', symbol)
+  url.searchParams.set('outputsize', 'compact') // ~100 most recent days
+  url.searchParams.set('apikey', apiKey())
+
+  const res = await fetch(url, { cache: 'no-store' })
+  if (!res.ok) {
+    throw new AlphaVantageError(`Alpha Vantage ${res.status}`)
+  }
+  const parsed = DailyResponseSchema.parse(await res.json())
+
+  // Alpha Vantage returns HTTP 200 with `Note` or `Information` on rate limit,
+  // and `Error Message` on unknown symbol / bad request.
+  if (parsed.Note || parsed.Information) {
+    throw new AlphaVantageRateLimitError()
+  }
+  if (parsed['Error Message']) {
+    throw new AlphaVantageError(parsed['Error Message'])
+  }
+
+  const series = parsed['Time Series (Daily)']
+  if (!series) {
+    throw new AlphaVantageError('No time series data returned')
+  }
+
+  return Object.entries(series)
+    .map(([date, bar]) => ({
+      time: date,
+      open: parseFloat(bar['1. open']),
+      high: parseFloat(bar['2. high']),
+      low: parseFloat(bar['3. low']),
+      close: parseFloat(bar['4. close']),
+      volume: parseInt(bar['5. volume'], 10),
+    }))
+    .sort((a, b) => a.time.localeCompare(b.time)) // asc — required by lightweight-charts
 }

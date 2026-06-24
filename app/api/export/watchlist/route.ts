@@ -48,6 +48,6 @@ export async function GET() {
 
   const date = new Date().toISOString().slice(0, 10)
   return new NextResponse(toCsv(rows), {
-    headers: csvResponseHeaders(`stocksense-watchlist-${date}.csv`),
+    headers: csvResponseHeaders(`verdex-watchlist-${date}.csv`),
   })
 }

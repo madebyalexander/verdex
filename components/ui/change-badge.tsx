@@ -1,5 +1,5 @@
-import { ArrowDown, ArrowUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { IoArrowDown as ArrowDown, IoArrowUp as ArrowUp } from 'react-icons/io5'
 
 export function ChangeBadge({
   pct,
@@ -14,7 +14,7 @@ export function ChangeBadge({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-0.5 rounded-md font-medium tabular-nums',
+        'inline-flex w-fit items-center gap-0.5 rounded-md font-medium tabular-nums',
         size === 'xs'
           ? 'px-1.5 py-0.5 text-[11px]'
           : 'px-2 py-0.5 text-xs',

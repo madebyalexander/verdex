@@ -1,5 +1,6 @@
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -13,6 +14,19 @@ export function PriceChartSkeleton() {
       <CardHeader>
         <CardTitle>Price chart</CardTitle>
         <CardDescription>Loading 100 days of OHLC data…</CardDescription>
+        <CardAction className="self-center">
+          <div
+            aria-hidden
+            className="flex items-center gap-1"
+          >
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-7 w-10 rounded-md bg-muted animate-pulse"
+              />
+            ))}
+          </div>
+        </CardAction>
       </CardHeader>
       <CardContent>
         <Skeleton className="w-full rounded-md" style={{ height: 400 }} />

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Bell, BellPlus } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -12,15 +11,20 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PriceQuickPicks } from '@/components/ui/price-quick-picks'
 import { toast } from 'sonner'
 import { createAlert } from '@/app/(app)/alerts/actions'
+import { IoNotifications as Bell, IoNotificationsCircle as AppNotification } from 'react-icons/io5'
 
 export function CreateAlertButton({
   symbol,
   currentPrice,
+  iconOnly = false,
 }: {
   symbol: string
   currentPrice: number
+  /** Render as a borderless bell icon (used in the sticky stock hero) */
+  iconOnly?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const [condition, setCondition] = useState<'above' | 'below'>('above')
@@ -57,17 +61,31 @@ export function CreateAlertButton({
     })
   }
 
+  const triggerLabel = `Set price alert for ${symbol}`
+
   return (
     <>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => setOpen(true)}
-        aria-label={`Set price alert for ${symbol}`}
-      >
-        <BellPlus aria-hidden className="size-3.5" />
-        <span>Set alert</span>
-      </Button>
+      {iconOnly ? (
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => setOpen(true)}
+          aria-label={triggerLabel}
+          title={triggerLabel}
+        >
+          <Bell aria-hidden className="size-4 text-muted-foreground" />
+        </Button>
+      ) : (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setOpen(true)}
+          aria-label={triggerLabel}
+        >
+          <AppNotification aria-hidden className="size-3.5" />
+          <span>Set alert</span>
+        </Button>
+      )}
       <Dialog
         open={open}
         onOpenChange={(v) => {
@@ -105,7 +123,7 @@ export function CreateAlertButton({
               Below
             </Button>
           </div>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-2">
             <label htmlFor="target-price" className="text-sm font-medium">
               Target price ($)
             </label>
@@ -123,6 +141,13 @@ export function CreateAlertButton({
               placeholder={`e.g. ${(currentPrice * (condition === 'above' ? 1.05 : 0.95)).toFixed(2)}`}
               step="0.01"
               min="0"
+            />
+            <PriceQuickPicks
+              currentPrice={currentPrice}
+              direction={condition}
+              value={price}
+              onPick={setPrice}
+              disabled={pending}
             />
           </div>
           {error && (

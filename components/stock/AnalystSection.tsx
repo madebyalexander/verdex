@@ -6,12 +6,12 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ArrowDown, ArrowUp } from 'lucide-react'
 import {
   getRecommendations,
   type FinnhubRecommendation,
 } from '@/lib/apis/finnhub'
 import { cn } from '@/lib/utils'
+import { IoArrowDown as ArrowDown, IoArrowUp as ArrowUp } from 'react-icons/io5'
 
 function totalAnalysts(r: FinnhubRecommendation): number {
   return r.strongBuy + r.buy + r.hold + r.sell + r.strongSell

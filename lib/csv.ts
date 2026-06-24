@@ -2,7 +2,15 @@
 
 function csvCell(value: unknown): string {
   if (value == null) return ''
-  const s = typeof value === 'string' ? value : String(value)
+  let s = typeof value === 'string' ? value : String(value)
+  // Formula-injection guard: a text cell beginning with = + - @ (or tab/CR) is
+  // interpreted as a formula by Excel / Google Sheets and can exfiltrate data or
+  // run commands when the file is opened. Stock names/sectors come from an
+  // external API, so prefix a single quote to force literal-text interpretation.
+  // Only applied to string-origin cells so genuine numeric columns keep their type.
+  if (typeof value === 'string' && /^[=+\-@\t\r]/.test(s)) {
+    s = `'${s}`
+  }
   // Quote if contains comma, quote, newline, or carriage return
   if (/[",\n\r]/.test(s)) {
     return `"${s.replace(/"/g, '""')}"`

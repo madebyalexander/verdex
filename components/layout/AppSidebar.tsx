@@ -1,18 +1,11 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import {
-  LayoutDashboard,
-  Star,
-  Briefcase,
-  GitCompare,
-  Bell,
-  Calendar,
-  Newspaper,
-  LogOut,
-  type LucideIcon,
-} from 'lucide-react'
+import type { ComponentType, SVGProps } from 'react'
+
+type IconComponent = ComponentType<SVGProps<SVGSVGElement>>
 import {
   Sidebar,
   SidebarContent,
@@ -24,44 +17,84 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from '@/components/ui/sidebar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { signOut } from '@/app/auth/actions'
+import {
+  IoGrid as Dashboard,
+  IoStatsChart as Markets,
+  IoStar as Star,
+  IoBriefcase as Suitcase,
+  IoGitMerge as Combine,
+  IoDocumentText as JournalPage,
+  IoPeople as Community,
+  IoLogOut as LogOut,
+  IoSettings as Settings,
+  IoChevronForward as ChevronRight,
+} from 'react-icons/io5'
 
 type NavItem = {
   href: string
   label: string
-  icon: LucideIcon
+  icon: IconComponent
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard', label: 'Dashboard', icon: Dashboard },
+  { href: '/market', label: 'Markets', icon: Markets },
   { href: '/watchlist', label: 'Watchlist', icon: Star },
-  { href: '/portfolio', label: 'Portfolio', icon: Briefcase },
-  { href: '/compare', label: 'Compare', icon: GitCompare },
-  { href: '/alerts', label: 'Alerts', icon: Bell },
-  { href: '/earnings', label: 'Earnings', icon: Calendar },
-  { href: '/news', label: 'News', icon: Newspaper },
+  { href: '/portfolio', label: 'Portfolio', icon: Suitcase },
+  { href: '/compare', label: 'Compare', icon: Combine },
+  { href: '/news', label: 'News', icon: JournalPage },
+  { href: '/investors', label: 'Investors', icon: Community },
 ]
 
 export function AppSidebar({ userEmail }: { userEmail: string }) {
   const pathname = usePathname()
+  const { isMobile, setOpenMobile } = useSidebar()
+  // Mobile-only: any nav action inside the sheet should also close the sheet
+  // so the user lands on the target page with no overlay still up.
+  const closeOnMobile = () => {
+    if (isMobile) setOpenMobile(false)
+  }
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" variant="inset">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
-              tooltip="StockSense AI"
-              render={<Link href="/dashboard" aria-label="StockSense AI home" />}
+              tooltip="Verdex"
+              render={
+                <Link
+                  href="/dashboard"
+                  aria-label="Verdex home"
+                  onClick={closeOnMobile}
+                />
+              }
             >
-              <div className="flex aspect-square size-7 items-center justify-center rounded-md bg-primary text-primary-foreground shrink-0">
-                <span aria-hidden className="h-3 w-3 rounded-sm bg-primary-foreground" />
-              </div>
-              <div className="grid flex-1 text-left leading-tight">
+              <Image
+                src="/verdex-mark-white.svg"
+                alt=""
+                width={26}
+                height={26}
+                priority
+                unoptimized
+                className="size-[26px] shrink-0"
+              />
+              <div className="grid flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate font-semibold tracking-tight">
-                  StockSense
+                  Verdex
                 </span>
                 <span className="truncate text-xs text-muted-foreground">
                   AI Forecasts
@@ -88,6 +121,7 @@ export function AppSidebar({ userEmail }: { userEmail: string }) {
                         <Link
                           href={href}
                           aria-current={isActive ? 'page' : undefined}
+                          onClick={closeOnMobile}
                         />
                       }
                     >
@@ -105,38 +139,74 @@ export function AppSidebar({ userEmail }: { userEmail: string }) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              tooltip={userEmail}
-              className="cursor-default hover:bg-transparent hover:text-sidebar-foreground active:bg-transparent"
-              render={
-                <div
-                  role="status"
-                  aria-label={`Signed in as ${userEmail}`}
-                />
-              }
-            >
-              <div className="flex aspect-square size-7 items-center justify-center rounded-md bg-secondary text-xs font-semibold uppercase shrink-0">
-                {userEmail.slice(0, 1)}
-              </div>
-              <div className="grid flex-1 text-left leading-tight min-w-0">
-                <span className="truncate text-xs text-muted-foreground">
-                  Signed in as
-                </span>
-                <span className="truncate text-sm">{userEmail}</span>
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <form action={signOut}>
-              <SidebarMenuButton
-                tooltip="Sign out"
-                render={<button type="submit" aria-label="Sign out" />}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <SidebarMenuButton
+                    size="lg"
+                    tooltip={userEmail}
+                    render={
+                      <button
+                        type="button"
+                        aria-label="Open account menu"
+                      />
+                    }
+                  >
+                    <div className="flex aspect-square size-7 items-center justify-center rounded-md bg-secondary text-xs font-semibold uppercase shrink-0">
+                      {userEmail.slice(0, 1)}
+                    </div>
+                    <div className="grid flex-1 text-left leading-tight min-w-0 group-data-[collapsible=icon]:hidden">
+                      <span className="truncate text-xs text-muted-foreground">
+                        Signed in as
+                      </span>
+                      <span className="truncate text-sm">{userEmail}</span>
+                    </div>
+                    <ChevronRight
+                      aria-hidden
+                      className="ml-auto size-3.5 text-muted-foreground group-data-[collapsible=icon]:hidden"
+                    />
+                  </SidebarMenuButton>
+                }
+              />
+              <DropdownMenuContent
+                side="right"
+                align="end"
+                sideOffset={8}
+                className="w-56"
               >
-                <LogOut aria-hidden />
-                <span>Sign out</span>
-              </SidebarMenuButton>
-            </form>
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="truncate text-xs font-normal text-muted-foreground">
+                    {userEmail}
+                  </DropdownMenuLabel>
+                  <DropdownMenuItem
+                    render={
+                      <Link href="/settings" onClick={closeOnMobile} />
+                    }
+                  >
+                    <Settings aria-hidden />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <form action={signOut}>
+                    <DropdownMenuItem
+                      variant="destructive"
+                      render={
+                        <button
+                          type="submit"
+                          className="w-full"
+                          aria-label="Sign out"
+                        />
+                      }
+                    >
+                      <LogOut aria-hidden />
+                      <span>Sign out</span>
+                    </DropdownMenuItem>
+                  </form>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

@@ -1,9 +1,16 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
 /* Class-based dark variant — Tailwind v4 ties `dark:` to prefers-color-scheme
  * by default, but shadcn (and our app) toggle dark via the .dark class on <html>. */
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* UX-mode variants, toggled real-time via `data-ux` on <html> (like dark mode).
+ * Use `simple:hidden` to hide technical-only content, `technical:hidden` to
+ * hide simple-only content — neither needs a base display class. */
+@custom-variant technical (&:where([data-ux="technical"], [data-ux="technical"] *));
+@custom-variant simple (&:where([data-ux="simple"], [data-ux="simple"] *));
 
 @theme inline {
   --font-sans: var(--font-inter);
@@ -55,92 +62,47 @@
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 /* Light-mode defaults (we hardcode dark, but shadcn expects both to exist). */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: #9353d3;
-  --primary-foreground: #ffffff;
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
+  --primary: oklch(0.496 0.265 301.924);
+  --primary-foreground: oklch(0.977 0.014 308.299);
+  --secondary: oklch(0.967 0.001 286.375);
+  --secondary-foreground: oklch(0.21 0.006 285.885);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
-  --accent: #9353d3;
-  --accent-foreground: #ffffff;
+  --accent: oklch(0.496 0.265 301.924);
+  --accent-foreground: oklch(0.977 0.014 308.299);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: #9353d3;
-  --chart-1: #9353d3;
-  --chart-2: #0EA5E9;
-  --chart-3: #F59E0B;
-  --chart-4: #EC4899;
-  --chart-5: #10B981;
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.827 0.119 306.383);
+  --chart-2: oklch(0.627 0.265 303.9);
+  --chart-3: oklch(0.558 0.288 302.321);
+  --chart-4: oklch(0.496 0.265 301.924);
+  --chart-5: oklch(0.438 0.218 303.724);
   --radius: 0.625rem;
 
   /* Light-mode sidebar tokens (mirror :root for completeness; we run dark only) */
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: #9353d3;
-  --sidebar-primary-foreground: #ffffff;
+  --sidebar-primary: oklch(0.558 0.288 302.321);
+  --sidebar-primary-foreground: oklch(0.977 0.014 308.299);
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: #9353d3;
-}
-
-/* StockSense AI dark theme — black tones, purple #9353D3 brand. */
-.dark,
-[data-theme="dark"] {
-  --background: #0a0a0c;
-  --foreground: #fafafa;
-
-  --card: #131316;
-  --card-foreground: #fafafa;
-
-  --popover: #131316;
-  --popover-foreground: #fafafa;
-
-  --primary: #9353d3;
-  --primary-foreground: #ffffff;
-
-  --secondary: #1f1f24;
-  --secondary-foreground: #fafafa;
-
-  --muted: #1f1f24;
-  --muted-foreground: #a1a1aa;
-
-  --accent: #9353d3;
-  --accent-foreground: #ffffff;
-
-  --destructive: #ef4444;
-
-  --border: #27272a;
-  --input: #27272a;
-  --ring: #9353d3;
-
-  --chart-1: #9353d3;
-  --chart-2: #0EA5E9;
-  --chart-3: #F59E0B;
-  --chart-4: #EC4899;
-  --chart-5: #10B981;
-
-  /* Sidebar: slightly darker than --card so it reads as a distinct surface
-   * against the main content area. Purple accent for the active item. */
-  --sidebar: #0d0d10;
-  --sidebar-foreground: #fafafa;
-  --sidebar-primary: #9353d3;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1f1f24;
-  --sidebar-accent-foreground: #fafafa;
-  --sidebar-border: #1f1f24;
-  --sidebar-ring: #9353d3;
+  --sidebar-ring: oklch(0.708 0 0);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
 }
 
 @layer base {
@@ -153,4 +115,39 @@
   html {
     @apply font-sans;
   }
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  /* Brand purple #AD46FF — drives buttons, badges, focus rings, selected states. */
+  --primary: #ad46ff;
+  --primary-foreground: oklch(0.977 0.014 308.299);
+  --secondary: oklch(0.274 0.006 286.033);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: #ad46ff;
+  --accent-foreground: oklch(0.977 0.014 308.299);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: #ad46ff;
+  --chart-1: oklch(0.827 0.119 306.383);
+  --chart-2: #ad46ff;
+  --chart-3: oklch(0.558 0.288 302.321);
+  --chart-4: oklch(0.496 0.265 301.924);
+  --chart-5: oklch(0.438 0.218 303.724);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: #ad46ff;
+  --sidebar-primary-foreground: oklch(0.977 0.014 308.299);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
 }

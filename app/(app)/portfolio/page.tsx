@@ -1,11 +1,14 @@
+import { Suspense } from 'react'
 import Link from 'next/link'
-import { Briefcase, Download } from 'lucide-react'
 import {
   Card,
+  CardAction,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import { ChangeBadge } from '@/components/ui/change-badge'
 import { listPositions } from '@/lib/portfolio'
 import { getQuote, type FinnhubQuote } from '@/lib/apis/finnhub'
@@ -15,24 +18,36 @@ import {
   AllocationPie,
   type AllocationSlice,
 } from '@/components/portfolio/AllocationPie'
+import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { CardStack } from '@/components/layout/CardStack'
 import { cn } from '@/lib/utils'
 
 import { usd } from '@/lib/format'
+import { IoBriefcase as Suitcase, IoDownload as Download } from 'react-icons/io5'
 
 export default async function PortfolioPage() {
+  return (
+    <PageContainer>
+      <PageHeader icon={Suitcase} title="Portfolio" />
+      <CardStack>
+        <Suspense fallback={<PortfolioSkeleton />}>
+          <PortfolioContent />
+        </Suspense>
+        <AddPositionForm />
+      </CardStack>
+    </PageContainer>
+  )
+}
+
+async function PortfolioContent() {
   const positions = await listPositions()
 
   if (positions.length === 0) {
     return (
-      <main className="p-6 max-w-3xl mx-auto flex flex-col gap-6">
-        <PageHeader
-          icon={Briefcase}
-          title="Portfolio"
-          description="Add positions manually to track cost basis and live P/L."
-        />
-        <AddPositionForm />
-      </main>
+      <p className="text-sm text-muted-foreground">
+        Add positions below to track cost basis and live P/L.
+      </p>
     )
   }
 
@@ -76,24 +91,12 @@ export default async function PortfolioPage() {
     }))
 
   return (
-    <main className="p-6 max-w-5xl mx-auto flex flex-col gap-6">
-      <PageHeader
-        icon={Briefcase}
-        title="Portfolio"
-        description={`${positions.length} ${positions.length === 1 ? 'position' : 'positions'}`}
-        action={
-          <a
-            href="/api/export/portfolio"
-            download
-            className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-sm text-muted-foreground border border-border hover:bg-secondary hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-          >
-            <Download aria-hidden className="size-3.5" />
-            <span>Export CSV</span>
-          </a>
-        }
-      />
+    <>
+      <p className="text-sm text-muted-foreground">
+        {positions.length} {positions.length === 1 ? 'position' : 'positions'}
+      </p>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard label="Total cost" value={usd(totalCost)} />
         <KpiCard label="Total value" value={usd(totalValue)} />
         <KpiCard
@@ -108,10 +111,11 @@ export default async function PortfolioPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card>
           <CardHeader>
             <CardTitle>Allocation</CardTitle>
+            <CardDescription>Share of total value by ticker</CardDescription>
           </CardHeader>
           <CardContent>
             {allocation.length > 0 ? (
@@ -124,9 +128,22 @@ export default async function PortfolioPage() {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-2">
+        <Card variant="list" className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Positions</CardTitle>
+            <CardDescription>
+              Cost basis vs live market value
+            </CardDescription>
+            <CardAction>
+              <a
+                href="/api/export/portfolio"
+                download
+                className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-sm text-muted-foreground border border-border hover:bg-secondary hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+              >
+                <Download aria-hidden className="size-3.5" />
+                <span>Export CSV</span>
+              </a>
+            </CardAction>
           </CardHeader>
           <CardContent>
             <div className="relative overflow-x-auto -mx-1 px-1 [mask-image:linear-gradient(to_right,transparent_0,black_0.5rem,black_calc(100%-0.5rem),transparent_100%)] sm:[mask-image:none]">
@@ -208,9 +225,24 @@ export default async function PortfolioPage() {
           </CardContent>
         </Card>
       </div>
+    </>
+  )
+}
 
-      <AddPositionForm />
-    </main>
+function PortfolioSkeleton() {
+  return (
+    <div className="flex flex-col gap-4">
+      <Skeleton className="h-4 w-24" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-20 rounded-xl" />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <Skeleton className="h-56 rounded-xl" />
+        <Skeleton className="h-56 rounded-xl lg:col-span-2" />
+      </div>
+    </div>
   )
 }
 
@@ -229,7 +261,9 @@ function KpiCard({
         <p className="text-xs uppercase tracking-wide text-muted-foreground">
           {label}
         </p>
-        <p className="text-lg font-semibold tabular-nums">{value}</p>
+        <p className="text-2xl font-semibold tabular-nums tracking-tight">
+          {value}
+        </p>
         {chip}
       </CardContent>
     </Card>
@@ -246,7 +280,7 @@ function Th({
   return (
     <th
       className={cn(
-        'py-2 px-2 font-medium text-xs uppercase tracking-wide text-muted-foreground',
+        'pt-2 pb-4 px-2 font-medium text-xs uppercase tracking-wide text-muted-foreground',
         align === 'right' ? 'text-right' : 'text-left'
       )}
     >

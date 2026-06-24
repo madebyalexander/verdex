@@ -1,5 +1,5 @@
 -- =====================================================================
--- StockSense AI — Postgres schema (Supabase)
+-- Verdex — Postgres schema (Supabase)
 -- Run once in Supabase SQL Editor before first app start.
 -- Safe to re-run: uses IF NOT EXISTS / OR REPLACE where applicable.
 -- =====================================================================
@@ -17,9 +17,15 @@ create table if not exists public.profiles (
   display_name          text,
   preferred_currency    text default 'USD',
   disclaimer_acked_at   timestamptz,
+  preferences           jsonb default '{}'::jsonb,
   created_at            timestamptz default now(),
   updated_at            timestamptz default now()
 );
+
+-- Idempotent column add for existing installs (jsonb bag of app preferences:
+-- default_landing, default_forecast_horizon, preferred_sectors, risk_profile, …).
+alter table public.profiles
+  add column if not exists preferences jsonb default '{}'::jsonb;
 
 -- auto-create a profile row when a new auth user is inserted
 create or replace function public.handle_new_user()

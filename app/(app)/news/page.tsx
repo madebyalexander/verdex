@@ -1,13 +1,16 @@
-import { Newspaper } from 'lucide-react'
+import { Suspense } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { SymbolBadge } from '@/components/ui/symbol-badge'
 import { listWatchlistItems } from '@/lib/watchlist'
 import {
   getCompanyNews,
   type FinnhubNewsArticle,
 } from '@/lib/apis/finnhub'
+import { classifyNewsSentiment } from '@/lib/news-sentiment'
+import { NewsFeed, type FeedArticle } from '@/components/news/NewsFeed'
+import { NewsSkeleton } from '@/components/news/NewsSkeleton'
+import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { cn } from '@/lib/utils'
+import { IoDocumentText as JournalPage } from 'react-icons/io5'
 
 const POPULAR = [
   'AAPL',
@@ -24,10 +27,24 @@ type EnrichedArticle = FinnhubNewsArticle & {
   symbols: string[]
 }
 
-export default async function NewsPage() {
+export default function NewsPage() {
+  return (
+    <PageContainer width="narrow">
+      <PageHeader
+        icon={JournalPage}
+        title="Market news"
+        description="Last 7 days across your watchlist + popular tickers"
+      />
+      <Suspense fallback={<NewsSkeleton />}>
+        <NewsContent />
+      </Suspense>
+    </PageContainer>
+  )
+}
+
+async function NewsContent() {
   const watchlistItems = await listWatchlistItems()
   const watchlistSymbols = watchlistItems.map((i) => i.symbol)
-  const watchlistSet = new Set(watchlistSymbols)
   const symbols = Array.from(new Set([...watchlistSymbols, ...POPULAR]))
 
   const perSymbol = await Promise.all(
@@ -58,95 +75,23 @@ export default async function NewsPage() {
   )
   const visible = all.slice(0, 100)
 
-  return (
-    <main className="p-6 max-w-3xl mx-auto flex flex-col gap-6">
-      <PageHeader
-        icon={Newspaper}
-        title="Market news"
-        description={`Last 7 days across your watchlist + popular tickers · ${visible.length} of ${all.length} articles`}
-      />
+  if (visible.length === 0) {
+    return (
+      <Card>
+        <CardContent className="text-center py-12 text-sm text-muted-foreground">
+          No recent news to show.
+        </CardContent>
+      </Card>
+    )
+  }
 
-      {visible.length === 0 ? (
-        <Card>
-          <CardContent className="text-center py-12 text-sm text-muted-foreground">
-            No recent news to show.
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardContent>
-            <ul>
-              {visible.map((article, i) => (
-                <ArticleRow
-                  key={article.id}
-                  article={article}
-                  isLast={i === visible.length - 1}
-                  watchlistSet={watchlistSet}
-                />
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
-    </main>
+  const sentimentMap = await classifyNewsSentiment(
+    visible.map((a) => ({ id: a.id, headline: a.headline }))
   )
-}
+  const enriched: FeedArticle[] = visible.map((a) => ({
+    ...a,
+    sentiment: sentimentMap.get(a.id) ?? 'neutral',
+  }))
 
-function ArticleRow({
-  article,
-  isLast,
-  watchlistSet,
-}: {
-  article: EnrichedArticle
-  isLast: boolean
-  watchlistSet: Set<string>
-}) {
-  const d = new Date(article.datetime * 1000)
-  const dateLabel = d.toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-  })
-  const timeLabel = d.toLocaleTimeString(undefined, {
-    hour: 'numeric',
-    minute: '2-digit',
-  })
-
-  return (
-    <li className={cn('py-3', !isLast && 'border-b border-border')}>
-      <a
-        href={article.url}
-        target="_blank"
-        rel="noreferrer"
-        className="block group"
-      >
-        <p className="text-sm font-medium leading-snug group-hover:underline underline-offset-2">
-          {article.headline}
-        </p>
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs mt-1.5 text-muted-foreground">
-          {article.source && (
-            <span className="truncate max-w-[10rem]">{article.source}</span>
-          )}
-          <span className="tabular-nums whitespace-nowrap">
-            {dateLabel} · {timeLabel}
-          </span>
-          {article.category && (
-            <span className="truncate">{article.category}</span>
-          )}
-        </div>
-      </a>
-      {article.symbols.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mt-2">
-          {article.symbols.map((s) => (
-            <SymbolBadge
-              key={s}
-              symbol={s}
-              size="sm"
-              href={`/stocks/${s}`}
-              active={watchlistSet.has(s)}
-            />
-          ))}
-        </div>
-      )}
-    </li>
-  )
+  return <NewsFeed articles={enriched} watchlist={watchlistSymbols} />
 }

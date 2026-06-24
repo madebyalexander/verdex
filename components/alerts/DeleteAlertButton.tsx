@@ -1,10 +1,10 @@
 'use client'
 
 import { useTransition } from 'react'
-import { Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { deleteAlert } from '@/app/(app)/alerts/actions'
+import { IoTrash as Trash } from 'react-icons/io5'
 
 export function DeleteAlertButton({ id }: { id: string }) {
   const [pending, startTransition] = useTransition()
@@ -25,7 +25,7 @@ export function DeleteAlertButton({ id }: { id: string }) {
       }}
       aria-label="Delete alert"
     >
-      <Trash2 aria-hidden className="size-3.5" />
+      <Trash aria-hidden className="size-3.5" />
     </Button>
   )
 }

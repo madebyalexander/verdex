@@ -8,6 +8,20 @@ import { SymbolCombobox } from '@/components/search/SymbolCombobox'
 
 const SymbolRegex = /^[A-Z][A-Z0-9.-]{0,9}$/
 
+const POPULAR_PAIRS: string[][] = [
+  ['AAPL', 'MSFT', 'GOOGL', 'AMZN'],
+  ['NVDA', 'AMD', 'INTC'],
+  ['TSLA', 'RIVN', 'LCID'],
+  ['META', 'GOOGL', 'SNAP'],
+  ['NFLX', 'DIS'],
+  ['JPM', 'BAC', 'WFC', 'GS'],
+  ['KO', 'PEP'],
+  ['V', 'MA'],
+]
+
+const sameSet = (a: string[], b: string[]) =>
+  a.length === b.length && a.every((s) => b.includes(s))
+
 export function CompareControls({
   symbols,
   max,
@@ -94,6 +108,34 @@ export function CompareControls({
           {error}
         </p>
       )}
+
+      <div className="flex flex-col gap-2 pt-3 border-t border-border">
+        <p className="text-xs text-muted-foreground">Popular comparisons</p>
+        <div className="flex flex-wrap gap-2">
+          {POPULAR_PAIRS.map((pair) => {
+            const trimmed = pair.slice(0, max)
+            const active = sameSet(trimmed, symbols)
+            return (
+              <Button
+                key={trimmed.join(',')}
+                type="button"
+                variant={active ? 'secondary' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setError(null)
+                  setInput('')
+                  navigate(trimmed)
+                }}
+                disabled={pending || active}
+                aria-label={`Compare ${trimmed.join(', ')}`}
+                className="font-mono text-xs"
+              >
+                {trimmed.join(' · ')}
+              </Button>
+            )
+          })}
+        </div>
+      </div>
     </div>
   )
 }

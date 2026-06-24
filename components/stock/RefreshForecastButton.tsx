@@ -1,11 +1,11 @@
 'use client'
 
 import { useTransition } from 'react'
-import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { refreshForecast } from '@/app/(app)/stocks/[symbol]/actions'
+import { IoRefresh as Refresh } from 'react-icons/io5'
 
 export function RefreshForecastButton({ symbol }: { symbol: string }) {
   const [pending, startTransition] = useTransition()
@@ -29,7 +29,7 @@ export function RefreshForecastButton({ symbol }: { symbol: string }) {
       disabled={pending}
       aria-label="Regenerate AI forecast"
     >
-      <RefreshCw aria-hidden className={cn('size-3.5', pending && 'animate-spin')} />
+      <Refresh aria-hidden className={cn('size-3.5', pending && 'animate-spin')} />
       <span>{pending ? 'Regenerating…' : 'Refresh'}</span>
     </Button>
   )

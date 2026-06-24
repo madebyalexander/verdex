@@ -1,5 +1,5 @@
+import { Suspense } from 'react'
 import Link from 'next/link'
-import { Download, Star } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -12,9 +12,17 @@ import {
 import { getQuote, getProfile } from '@/lib/apis/finnhub'
 import type { FinnhubQuote, FinnhubProfile } from '@/lib/apis/finnhub'
 import { WatchlistsTabs } from '@/components/watchlist/WatchlistsTabs'
+import { WatchlistSkeleton } from '@/components/watchlist/WatchlistSkeleton'
+import { AlertsSection } from '@/components/alerts/AlertsSection'
+import { AlertsSkeleton } from '@/components/alerts/AlertsSkeleton'
+import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { SectionHeader } from '@/components/layout/SectionHeader'
+import { CardStack } from '@/components/layout/CardStack'
+import { cn } from '@/lib/utils'
 
 import { usd } from '@/lib/format'
+import { IoStar as Star } from 'react-icons/io5'
 
 function resolveLogo(profile: FinnhubProfile): string | null {
   if (profile.logo && profile.logo.length > 0) return profile.logo
@@ -41,28 +49,58 @@ export default async function WatchlistPage({
   searchParams: Promise<{ id?: string }>
 }) {
   const { id: requestedId } = await searchParams
+  return (
+    <PageContainer width="narrow">
+      <PageHeader
+        icon={Star}
+        title="Watchlist"
+        description="Your tracked stocks and price alerts"
+      />
+      <CardStack>
+        <Suspense
+          key={requestedId ?? '_'}
+          fallback={<WatchlistSkeleton />}
+        >
+          <WatchlistContent requestedId={requestedId} />
+        </Suspense>
+
+        <SectionHeader
+          title="Price alerts"
+          description="Fire when the price crosses your threshold and you visit the symbol"
+        />
+        <Suspense fallback={<AlertsSkeleton />}>
+          <AlertsSection />
+        </Suspense>
+      </CardStack>
+    </PageContainer>
+  )
+}
+
+async function WatchlistContent({ requestedId }: { requestedId?: string }) {
   const watchlists = await listAllWatchlists()
 
   if (watchlists.length === 0) {
     return (
-      <main className="p-6 max-w-2xl mx-auto flex flex-col gap-6">
-        <PageHeader icon={Star} title="Watchlist" />
+      <CardStack>
         <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-            <span aria-hidden className="inline-flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary">
-              <Star className="size-6" />
-            </span>
-            <h2 className="text-lg font-medium">Nothing here yet</h2>
-            <p className="text-sm text-muted-foreground max-w-xs">
-              Open a stock detail page and tap the <strong>Watchlist</strong> star
-              to start tracking it.
-            </p>
-            <Link href="/stocks/AAPL">
-              <Button>Try AAPL</Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </main>
+        <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+          <span
+            aria-hidden
+            className="inline-flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary"
+          >
+            <Star className="size-6" />
+          </span>
+          <h2 className="text-lg font-medium">Nothing here yet</h2>
+          <p className="text-sm text-muted-foreground max-w-xs">
+            Open a stock detail page and tap the <strong>Watchlist</strong>{' '}
+            star to start tracking it.
+          </p>
+          <Link href="/stocks/AAPL">
+            <Button>Try AAPL</Button>
+          </Link>
+        </CardContent>
+      </Card>
+      </CardStack>
     )
   }
 
@@ -85,40 +123,23 @@ export default async function WatchlistPage({
   )
 
   return (
-    <main className="p-6 max-w-3xl mx-auto flex flex-col gap-6">
-      <PageHeader
-        icon={Star}
-        title="Watchlist"
-        description={`${enriched.length} ${enriched.length === 1 ? 'stock' : 'stocks'} in this list`}
-        action={
-          <a
-            href="/api/export/watchlist"
-            download
-            className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-sm text-muted-foreground border border-border hover:bg-secondary hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-          >
-            <Download aria-hidden className="size-3.5" />
-            <span>Export CSV</span>
-          </a>
-        }
-      />
-
+    <Card variant="list" className="gap-0">
       <WatchlistsTabs watchlists={watchlists} activeId={activeWl.id} />
-
       {enriched.length === 0 ? (
-        <Card>
-          <CardContent className="text-center py-10 text-sm text-muted-foreground">
-            “{activeWl.name}” is empty. Add stocks from any detail page using
-            the “+ Watchlist” button (saves to your default list).
-          </CardContent>
-        </Card>
+        <p className="text-sm text-center py-10 px-6 text-muted-foreground">
+          “{activeWl.name}” is empty. Add stocks from any detail page using the
+          watchlist star.
+        </p>
       ) : (
-        <div className="flex flex-col gap-2">
+        <ul className="divide-y divide-border">
           {enriched.map((item) => (
-            <WatchlistRow key={item.symbol} item={item} />
+            <li key={item.symbol}>
+              <WatchlistRow item={item} />
+            </li>
           ))}
-        </div>
+        </ul>
       )}
-    </main>
+    </Card>
   )
 }
 
@@ -127,19 +148,15 @@ function WatchlistRow({ item }: { item: EnrichedItem }) {
     return (
       <Link
         href={`/stocks/${item.symbol}`}
-        className="block transition-opacity hover:opacity-90"
+        className="flex items-center justify-between px-6 py-3 transition-colors hover:bg-secondary/50 focus-visible:outline-none focus-visible:bg-secondary"
       >
-        <Card>
-          <CardContent className="flex items-center justify-between py-3">
-            <span className="font-semibold">{item.symbol}</span>
-            <Badge
-              variant="outline"
-              className="border-transparent bg-amber-500/10 text-amber-400 ring-1 ring-inset ring-amber-500/20"
-            >
-              Data unavailable
-            </Badge>
-          </CardContent>
-        </Card>
+        <span className="font-semibold tabular-nums">{item.symbol}</span>
+        <Badge
+          variant="outline"
+          className="border-transparent bg-amber-500/10 text-amber-400 ring-1 ring-inset ring-amber-500/20"
+        >
+          Data unavailable
+        </Badge>
       </Link>
     )
   }
@@ -149,38 +166,37 @@ function WatchlistRow({ item }: { item: EnrichedItem }) {
   return (
     <Link
       href={`/stocks/${item.symbol}`}
-      className="block transition-opacity hover:opacity-90"
+      className={cn(
+        'flex items-center gap-4 px-6 py-3 transition-colors',
+        'hover:bg-secondary/50 focus-visible:outline-none focus-visible:bg-secondary'
+      )}
     >
-      <Card>
-        <CardContent className="flex items-center gap-4">
-          {logo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={logo}
-              alt=""
-              width={36}
-              height={36}
-              loading="lazy"
-              decoding="async"
-              className="rounded-md object-contain bg-secondary"
-            />
-          ) : (
-            <div className="rounded-md flex items-center justify-center text-xs font-semibold shrink-0 w-9 h-9 bg-secondary text-muted-foreground">
-              {item.symbol.slice(0, 2)}
-            </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold">{item.symbol}</p>
-            <p className="text-xs truncate text-muted-foreground">
-              {item.profile.name}
-            </p>
-          </div>
-          <div className="text-right flex flex-col items-end gap-1">
-            <p className="font-semibold tabular-nums">{usd(item.quote.c)}</p>
-            <ChangeBadge pct={item.quote.dp} />
-          </div>
-        </CardContent>
-      </Card>
+      {logo ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={logo}
+          alt=""
+          width={36}
+          height={36}
+          loading="lazy"
+          decoding="async"
+          className="rounded-md object-contain bg-secondary shrink-0"
+        />
+      ) : (
+        <div className="rounded-md flex items-center justify-center text-xs font-semibold shrink-0 w-9 h-9 bg-secondary text-muted-foreground">
+          {item.symbol.slice(0, 2)}
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold tabular-nums">{item.symbol}</p>
+        <p className="text-xs truncate text-muted-foreground">
+          {item.profile.name}
+        </p>
+      </div>
+      <div className="flex shrink-0 items-center gap-3">
+        <span className="font-semibold tabular-nums">{usd(item.quote.c)}</span>
+        <ChangeBadge pct={item.quote.dp} size="xs" />
+      </div>
     </Link>
   )
 }

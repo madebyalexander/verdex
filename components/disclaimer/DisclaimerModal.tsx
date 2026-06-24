@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,6 +14,7 @@ import {
 import { ackDisclaimer } from '@/app/auth/actions'
 
 export function DisclaimerModal({ openByDefault }: { openByDefault: boolean }) {
+  const router = useRouter()
   const [open, setOpen] = useState(openByDefault)
   const [pending, startTransition] = useTransition()
 
@@ -24,6 +26,8 @@ export function DisclaimerModal({ openByDefault }: { openByDefault: boolean }) {
         return
       }
       setOpen(false)
+      // Re-render the layout so first-run onboarding can appear next.
+      router.refresh()
     })
   }
 
@@ -33,7 +37,7 @@ export function DisclaimerModal({ openByDefault }: { openByDefault: boolean }) {
         <AlertDialogHeader>
           <AlertDialogTitle>Before you continue</AlertDialogTitle>
           <AlertDialogDescription className="text-sm">
-            StockSense AI provides informational analysis powered by artificial
+            Verdex provides informational analysis powered by artificial
             intelligence. This is <strong>NOT financial advice</strong>.
             Predictions are probabilistic and may be wrong. Past performance
             does not indicate future results. Always do your own research and

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowDown, ArrowUp } from 'lucide-react'
+import { CardStack } from '@/components/layout/CardStack'
 import {
   Card,
   CardContent,
@@ -20,9 +20,11 @@ import { summarizeIndicators } from '@/lib/indicators'
 import { CompareChart, type CompareSeries } from './CompareChart'
 import { cn } from '@/lib/utils'
 import { usd, compactUsd } from '@/lib/format'
+import { IoArrowDown as ArrowDown, IoArrowUp as ArrowUp } from 'react-icons/io5'
 
-// Aligned with --chart-1..4 in globals.css.
-const COLORS = ['#9353D3', '#0EA5E9', '#F59E0B', '#EC4899'] as const
+// Brand purple matches preset --chart-2 / --sidebar-primary; remaining hues
+// stay distinct so overlay lines don't blend together in dark mode.
+const COLORS = ['#ad46ff', '#0EA5E9', '#F59E0B', '#EC4899'] as const
 
 
 function normalize(bars: OhlcvBar[]): CompareSeries['data'] {
@@ -88,7 +90,7 @@ export async function CompareView({ symbols }: { symbols: string[] }) {
     }))
 
   return (
-    <div className="flex flex-col gap-4">
+    <CardStack>
       <Card>
         <CardHeader>
           <CardTitle>Overlay chart</CardTitle>
@@ -108,7 +110,7 @@ export async function CompareView({ symbols }: { symbols: string[] }) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card variant="list">
         <CardHeader>
           <CardTitle>Side-by-side</CardTitle>
         </CardHeader>
@@ -119,7 +121,7 @@ export async function CompareView({ symbols }: { symbols: string[] }) {
                 <tr className="border-b border-border">
                   <Th align="left">Metric</Th>
                   {entries.map((e) => (
-                    <Th key={e.symbol} align="right">
+                    <Th key={e.symbol} align="left">
                       <Link
                         href={`/stocks/${e.symbol}`}
                         className="underline underline-offset-2 hover:opacity-80"
@@ -158,7 +160,7 @@ export async function CompareView({ symbols }: { symbols: string[] }) {
                     return (
                       <span
                         className={cn(
-                          'inline-flex items-center justify-end gap-0.5',
+                          'inline-flex items-center gap-0.5',
                           up ? 'text-emerald-400' : 'text-rose-400'
                         )}
                       >
@@ -206,6 +208,7 @@ export async function CompareView({ symbols }: { symbols: string[] }) {
                   entries={entries}
                   render={(e) => formatMetric(e.metrics?.beta, 2)}
                   numeric
+                  className="simple:hidden"
                 />
                 <Row
                   label="52w high"
@@ -234,13 +237,14 @@ export async function CompareView({ symbols }: { symbols: string[] }) {
                     return s.rsi_14 != null ? s.rsi_14.toFixed(1) : '—'
                   }}
                   numeric
+                  className="simple:hidden"
                 />
               </tbody>
             </table>
           </div>
         </CardContent>
       </Card>
-    </div>
+    </CardStack>
   )
 }
 
@@ -262,7 +266,7 @@ function Th({
   return (
     <th
       className={cn(
-        'py-2 px-3 font-medium text-xs uppercase tracking-wide text-muted-foreground',
+        'pt-2 pb-4 px-3 font-medium text-xs uppercase tracking-wide text-muted-foreground',
         align === 'right' ? 'text-right' : 'text-left'
       )}
     >
@@ -276,24 +280,23 @@ function Row({
   entries,
   render,
   numeric = false,
+  className,
 }: {
   label: string
   entries: CompareEntry[]
   render: (e: CompareEntry) => React.ReactNode
   numeric?: boolean
+  className?: string
 }) {
   return (
-    <tr className="border-b border-border">
+    <tr className={cn('border-b border-border', className)}>
       <td className="py-2 px-3 text-xs uppercase tracking-wide text-muted-foreground">
         {label}
       </td>
       {entries.map((e) => (
         <td
           key={e.symbol}
-          className={cn(
-            'py-2 px-3',
-            numeric ? 'text-right tabular-nums' : 'text-left'
-          )}
+          className={cn('py-2 px-3 text-left', numeric && 'tabular-nums')}
         >
           {render(e)}
         </td>

@@ -1,5 +1,7 @@
+import { cache } from 'react'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import type { User } from '@supabase/supabase-js'
 
 export async function createClient() {
   const cookieStore = await cookies()
@@ -25,3 +27,13 @@ export async function createClient() {
     }
   )
 }
+
+// React.cache dedupes across layout + page within a single render pass, so
+// the Supabase auth round-trip only happens once per navigation.
+export const getCurrentUser = cache(async (): Promise<User | null> => {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  return user
+})

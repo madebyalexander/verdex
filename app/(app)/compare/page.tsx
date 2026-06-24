@@ -1,10 +1,18 @@
 import { Suspense } from 'react'
-import { GitCompare } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { CompareControls } from '@/components/compare/CompareControls'
 import { CompareView } from '@/components/compare/CompareView'
 import { CompareSkeleton } from '@/components/compare/CompareSkeleton'
+import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { CardStack } from '@/components/layout/CardStack'
+import { IoGitMerge as Combine } from 'react-icons/io5'
 
 const MAX_SYMBOLS = 4
 const SymbolRegex = /^[A-Z][A-Z0-9.-]{0,9}$/
@@ -25,29 +33,32 @@ export default async function ComparePage({
   ).slice(0, MAX_SYMBOLS)
 
   return (
-    <main className="p-6 max-w-5xl mx-auto flex flex-col gap-6">
+    <PageContainer>
       <PageHeader
-        icon={GitCompare}
+        icon={Combine}
         title="Compare stocks"
-        description={`Up to ${MAX_SYMBOLS} tickers · overlay chart + side-by-side metrics.`}
+        description={`Up to ${MAX_SYMBOLS} tickers · overlay chart + side-by-side metrics`}
       />
 
-      <CompareControls symbols={symbols} max={MAX_SYMBOLS} />
-
-      {symbols.length === 0 ? (
+      <CardStack>
         <Card>
-          <CardContent className="text-sm text-center py-12 text-muted-foreground">
-            Add a symbol above to start a comparison. Try{' '}
-            <code className="font-mono">AAPL</code>,{' '}
-            <code className="font-mono">NVDA</code>,{' '}
-            <code className="font-mono">TSLA</code>.
+          <CardHeader>
+            <CardTitle>Tickers</CardTitle>
+            <CardDescription>
+              Add or remove symbols to update the comparison
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <CompareControls symbols={symbols} max={MAX_SYMBOLS} />
           </CardContent>
         </Card>
-      ) : (
-        <Suspense key={symbols.join(',')} fallback={<CompareSkeleton />}>
-          <CompareView symbols={symbols} />
-        </Suspense>
-      )}
-    </main>
+
+        {symbols.length > 0 && (
+          <Suspense key={symbols.join(',')} fallback={<CompareSkeleton />}>
+            <CompareView symbols={symbols} />
+          </Suspense>
+        )}
+      </CardStack>
+    </PageContainer>
   )
 }

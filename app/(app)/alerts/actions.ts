@@ -39,7 +39,7 @@ export async function createAlert(input: {
   if (error) return { error: error.message }
 
   revalidatePath(`/stocks/${parsed.data.symbol}`)
-  revalidatePath('/alerts')
+  revalidatePath('/watchlist')
   return {}
 }
 
@@ -51,6 +51,6 @@ export async function deleteAlert(id: string): Promise<{ error?: string }> {
   const { error } = await supabase.from('price_alerts').delete().eq('id', id)
   if (error) return { error: error.message }
 
-  revalidatePath('/alerts')
+  revalidatePath('/watchlist')
   return {}
 }

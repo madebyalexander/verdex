@@ -1,4 +1,4 @@
-# StockSense AI — Technical Implementation Specification
+# Verdex — Technical Implementation Specification
 
 > Investment-assistant web app with AI-powered stock price forecasting.
 > Single source of truth for product, architecture, and implementation.
@@ -7,7 +7,7 @@
 
 ## 1. Product Overview
 
-**StockSense AI** is a web application that helps retail investors make data-driven decisions. The flagship feature is an **AI-generated stock price forecast** with transparent reasoning — built by synthesizing technical indicators, fundamentals, news sentiment, analyst recommendations, and insider activity.
+**Verdex** is a web application that helps retail investors make data-driven decisions. The flagship feature is an **AI-generated stock price forecast** with transparent reasoning — built by synthesizing technical indicators, fundamentals, news sentiment, analyst recommendations, and insider activity.
 
 **Core value:** remove the "black box" from investment decisions. The AI doesn't just output a number — it shows which factors influenced the forecast and how much weight each carried.
 
@@ -382,7 +382,7 @@ Implementation: a thin `cache(key, ttl, fetcher)` wrapper in `lib/cache.ts` — 
 ### Theming
 - **Dark mode only.** No light theme, no toggle, no system-preference detection. Do not install `next-themes`. `data-theme="dark"` + `class="dark"` are hardcoded on `<html>` in [app/layout.tsx](./app/layout.tsx).
 - **Tailwind v4 dark variant override:** [app/globals.css](./app/globals.css) declares `@custom-variant dark (&:where(.dark, .dark *));` so `dark:` keys off our `.dark` class, not `prefers-color-scheme`. Removing this line silently breaks every dark-mode color in the app.
-- **Brand accent: purple `#9353D3`** — mapped to shadcn's `--primary` CSS token. Buttons use `variant="default"` (which reads `--primary`). The purple accent applies to:
+- **Brand accent: the shadcn "Purple" preset** — applied via `npx shadcn@latest apply --preset b4P7eq8m8`. We override the dark-mode `--primary` to the brighter `oklch(0.627 0.265 303.9)` ≈ `#ad46ff` (instead of the preset's default deep `oklch(0.438 0.218 303.724)` which renders nearly-black on dark surfaces). Buttons use `variant="default"` (which reads `--primary`). The purple accent applies to:
   - Default `Button`s, links, focus rings
   - Active nav item
   - Brand logo
@@ -404,7 +404,7 @@ Implementation: a thin `cache(key, ttl, fetcher)` wrapper in `lib/cache.ts` — 
 - ✅ `npx create-next-app@latest` with TypeScript, Tailwind v4, App Router (Next.js 16)
 - ✅ shadcn/ui initialized — components generated into [components/ui/](./components/ui/), Inter font wired, Tailwind v4 dark variant overridden in [app/globals.css](./app/globals.css)
 - ✅ Backend libs wired: [lib/supabase/client.ts](./lib/supabase/client.ts), [lib/supabase/server.ts](./lib/supabase/server.ts), [lib/supabase/admin.ts](./lib/supabase/admin.ts), [lib/apis/gemini.ts](./lib/apis/gemini.ts), [lib/cache.ts](./lib/cache.ts), [lib/ratelimit.ts](./lib/ratelimit.ts)
-- ✅ Dark theme hardcoded + purple `--primary: #9353D3` override in [app/globals.css](./app/globals.css)
+- ✅ Dark theme hardcoded + shadcn "Purple" preset (`apply --preset b4P7eq8m8`) wired into [app/globals.css](./app/globals.css)
 - ⏸️ **Run `db/schema.sql` against the Supabase project** (SQL editor or `supabase db push`) — user action
 - ⏸️ Verify `npm run build` succeeds and the dashboard renders in dark mode with the purple accent
 
@@ -451,7 +451,7 @@ Implementation: a thin `cache(key, ttl, fetcher)` wrapper in `lib/cache.ts` — 
 
 ## 15. Legal Disclaimers (REQUIRED in UI)
 
-- **Footer on every page:** *"StockSense AI provides informational analysis powered by artificial intelligence. This is NOT financial advice. Predictions are probabilistic and may be wrong. Past performance does not indicate future results. Always do your own research and consult a licensed financial advisor before investing."*
+- **Footer on every page:** *"Verdex provides informational analysis powered by artificial intelligence. This is NOT financial advice. Predictions are probabilistic and may be wrong. Past performance does not indicate future results. Always do your own research and consult a licensed financial advisor before investing."*
 - **First-run modal** on signup with required acknowledgment checkbox; persist to `profiles.disclaimer_acked_at`
 - **Badge on every AI forecast card:** "AI estimate — not advice"
 - **No trading capability** — the app is read/analyze only. Never integrate brokerage execution.

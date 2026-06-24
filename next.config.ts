@@ -45,7 +45,14 @@ const nextConfig: NextConfig = {
     root: path.resolve(__dirname),
   },
   experimental: {
-    optimizePackageImports: ["lucide-react", "recharts"],
+    optimizePackageImports: ["react-icons", "recharts"],
+    // Re-navigations to a recently-visited page reuse the client cache for
+    // staleTimes.dynamic seconds → makes back/forward + sidebar hopping feel
+    // instant for routes that haven't materially changed.
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
   },
   async headers() {
     return [

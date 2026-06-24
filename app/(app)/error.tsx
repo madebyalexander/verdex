@@ -29,19 +29,17 @@ export default function AppError({
         <CardHeader>
           <CardTitle>Something went wrong</CardTitle>
           <CardDescription>
-            An unexpected error occurred while loading this page.
+            We hit an unexpected error loading this page. Trying again often
+            fixes it.
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-2">
-          <p className="text-sm font-mono break-words text-muted-foreground">
-            {error.message || 'Unknown error'}
-          </p>
-          {error.digest && (
+        {error.digest && (
+          <CardContent>
             <p className="text-xs text-muted-foreground">
-              Error ID: {error.digest}
+              Reference: <span className="font-mono">{error.digest}</span>
             </p>
-          )}
-        </CardContent>
+          </CardContent>
+        )}
         <CardFooter className="flex gap-2">
           <Button onClick={reset}>Try again</Button>
           <Link href="/dashboard">

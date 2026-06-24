@@ -88,7 +88,7 @@ export async function InsiderSection({ symbol }: { symbol: string }) {
     .slice(0, 10)
 
   return (
-    <Card>
+    <Card variant="list">
       <CardHeader>
         <CardTitle>Insider transactions</CardTitle>
         <CardDescription>
@@ -176,7 +176,7 @@ function Th({
   return (
     <th
       className={cn(
-        'py-2 font-medium text-xs uppercase tracking-wide text-muted-foreground',
+        'pt-2 pb-4 font-medium text-xs uppercase tracking-wide text-muted-foreground',
         align === 'right' ? 'text-right' : 'text-left'
       )}
     >

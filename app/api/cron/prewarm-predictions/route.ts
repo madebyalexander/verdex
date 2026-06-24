@@ -1,5 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { timingSafeEqual } from 'node:crypto'
 import { generateFreshForecast } from '@/lib/forecast'
+
+// Length-independent, constant-time string comparison so the cron secret can't
+// be recovered via response-timing analysis.
+function safeEqual(a: string, b: string): boolean {
+  const ab = Buffer.from(a)
+  const bb = Buffer.from(b)
+  if (ab.length !== bb.length) return false
+  return timingSafeEqual(ab, bb)
+}
 
 // Pre-warms forecasts for popular tickers so first-of-day visitors don't pay
 // the 5-15s generation wait. Costs ~$0.04 per ticker per run.
@@ -25,9 +35,9 @@ const POPULAR_TICKERS = [
 
 export async function GET(req: NextRequest) {
   // Vercel Cron sends `Authorization: Bearer <CRON_SECRET>`
-  const authHeader = req.headers.get('authorization')
-  const expected = `Bearer ${process.env.CRON_SECRET ?? ''}`
-  if (!process.env.CRON_SECRET || authHeader !== expected) {
+  const secret = process.env.CRON_SECRET
+  const authHeader = req.headers.get('authorization') ?? ''
+  if (!secret || !safeEqual(authHeader, `Bearer ${secret}`)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

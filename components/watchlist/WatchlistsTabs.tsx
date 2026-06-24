@@ -2,8 +2,6 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { Pencil, Plus, Trash2, X } from 'lucide-react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,7 +12,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import type { WatchlistMeta } from '@/lib/watchlist'
@@ -24,6 +39,15 @@ import {
   deleteWatchlistAction,
 } from '@/app/(app)/watchlist/actions'
 import { cn } from '@/lib/utils'
+import {
+  IoChevronDown as ChevronDown,
+  IoEllipsisHorizontal as More,
+  IoAdd as Plus,
+  IoPencil as EditPencil,
+  IoTrash as Trash,
+  IoDownload as Download,
+  IoCheckmark as Check,
+} from 'react-icons/io5'
 
 export function WatchlistsTabs({
   watchlists,
@@ -39,7 +63,6 @@ export function WatchlistsTabs({
   const [renameValue, setRenameValue] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
-
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
 
   const active = watchlists.find((w) => w.id === activeId)
@@ -112,137 +135,186 @@ export function WatchlistsTabs({
     })
   }
 
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-2">
-        {watchlists.map((w) => {
-          const isActive = w.id === activeId
-          return (
-            <Link key={w.id} href={`/watchlist?id=${w.id}`}>
-              <span
-                className={cn(
-                  'inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors',
-                  isActive
-                    ? 'bg-primary/10 text-primary border border-primary/30'
-                    : 'bg-secondary text-muted-foreground border border-border hover:bg-secondary/70'
-                )}
-              >
-                {w.name}
-                <span className="text-xs tabular-nums opacity-70">
-                  {w.item_count}
-                </span>
-              </span>
-            </Link>
-          )
-        })}
+  function exportCsv() {
+    const a = document.createElement('a')
+    a.href = '/api/export/watchlist'
+    a.click()
+  }
 
-        {creating ? (
-          <span className="inline-flex items-center gap-1">
-            <Input
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  submitCreate()
-                } else if (e.key === 'Escape') {
-                  setCreating(false)
-                }
-              }}
-              placeholder="List name"
-              autoFocus
-              disabled={pending}
-              className="h-8 w-36"
+  return (
+    <>
+      <div className="flex items-center justify-between gap-2 px-6 pb-3 border-b border-border">
+        {/* List switcher */}
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex min-w-0 items-center gap-1.5 -ml-2 rounded-md px-2 py-1 transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
+            <span className="truncate text-base font-semibold tracking-tight">
+              {active?.name ?? 'Watchlist'}
+            </span>
+            {active && (
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {active.item_count}
+              </span>
+            )}
+            <ChevronDown
+              aria-hidden
+              className="size-4 shrink-0 text-muted-foreground transition-transform data-[popup-open]:rotate-180"
             />
-            <Button
-              size="sm"
-              onClick={submitCreate}
-              disabled={pending}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-56">
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Your lists</DropdownMenuLabel>
+              {watchlists.map((w) => (
+                <DropdownMenuItem
+                  key={w.id}
+                  onClick={() => router.push(`/watchlist?id=${w.id}`)}
+                  className="gap-2"
+                >
+                  <span className="flex-1 truncate">{w.name}</span>
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    {w.item_count}
+                  </span>
+                  {w.id === activeId && (
+                    <Check aria-hidden className="size-4 text-primary" />
+                  )}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={startCreate}>
+              <Plus aria-hidden />
+              <span>New list</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Actions */}
+        <div className="flex shrink-0 items-center gap-1">
+          <Button size="sm" variant="outline" onClick={startCreate}>
+            <Plus aria-hidden className="size-3.5" />
+            <span>New</span>
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              aria-label="List actions"
+              className={cn(buttonVariants({ variant: 'ghost', size: 'icon-sm' }))}
             >
-              Add
-            </Button>
+              <More aria-hidden />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-44">
+              <DropdownMenuItem onClick={startRename}>
+                <EditPencil aria-hidden />
+                <span>Rename</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={exportCsv}>
+                <Download aria-hidden />
+                <span>Export CSV</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                disabled={watchlists.length <= 1}
+                onClick={() => setConfirmDeleteOpen(true)}
+              >
+                <Trash aria-hidden />
+                <span>Delete list</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      {/* Create list */}
+      <Dialog
+        open={creating}
+        onOpenChange={(o) => {
+          setCreating(o)
+          if (!o) setError(null)
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>New watchlist</DialogTitle>
+            <DialogDescription>Give your list a name.</DialogDescription>
+          </DialogHeader>
+          <Input
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                submitCreate()
+              }
+            }}
+            placeholder="e.g. Tech, Dividend payers"
+            autoFocus
+            disabled={pending}
+          />
+          {error && (
+            <p className="text-sm text-rose-400" role="alert">
+              {error}
+            </p>
+          )}
+          <DialogFooter>
             <Button
-              size="icon-sm"
               variant="ghost"
               onClick={() => setCreating(false)}
               disabled={pending}
-              aria-label="Cancel new list"
             >
-              <X aria-hidden className="size-3.5" />
+              Cancel
             </Button>
-          </span>
-        ) : (
-          <Button size="sm" variant="outline" onClick={startCreate}>
-            <Plus aria-hidden className="size-3.5" />
-            <span>New list</span>
-          </Button>
-        )}
-      </div>
+            <Button onClick={submitCreate} disabled={pending}>
+              {pending ? 'Creating…' : 'Create'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      {active && (
-        <div className="flex items-center justify-between gap-2 flex-wrap border-t border-border pt-3">
-          {renaming ? (
-            <div className="flex items-center gap-2">
-              <Input
-                value={renameValue}
-                onChange={(e) => setRenameValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    submitRename()
-                  } else if (e.key === 'Escape') {
-                    setRenaming(false)
-                  }
-                }}
-                autoFocus
-                disabled={pending}
-                className="h-8 w-48"
-              />
-              <Button size="sm" onClick={submitRename} disabled={pending}>
-                Save
-              </Button>
-              <Button
-                size="icon-sm"
-                variant="ghost"
-                onClick={() => setRenaming(false)}
-                disabled={pending}
-                aria-label="Cancel rename"
-              >
-                <X aria-hidden className="size-3.5" />
-              </Button>
-            </div>
-          ) : (
-            <h2 className="text-lg font-semibold tracking-tight">
-              {active.name}
-            </h2>
+      {/* Rename list */}
+      <Dialog
+        open={renaming}
+        onOpenChange={(o) => {
+          setRenaming(o)
+          if (!o) setError(null)
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Rename watchlist</DialogTitle>
+            <DialogDescription>
+              Choose a new name for “{active?.name}”.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                submitRename()
+              }
+            }}
+            autoFocus
+            disabled={pending}
+          />
+          {error && (
+            <p className="text-sm text-rose-400" role="alert">
+              {error}
+            </p>
           )}
-
-          <div className="flex items-center gap-1">
-            {!renaming && (
-              <Button size="sm" variant="ghost" onClick={startRename}>
-                <Pencil aria-hidden className="size-3.5" />
-                <span>Rename</span>
-              </Button>
-            )}
+          <DialogFooter>
             <Button
-              size="sm"
               variant="ghost"
-              onClick={() => setConfirmDeleteOpen(true)}
-              disabled={pending || watchlists.length <= 1}
-              aria-label={`Delete watchlist ${active.name}`}
+              onClick={() => setRenaming(false)}
+              disabled={pending}
             >
-              <Trash2 aria-hidden className="size-3.5" />
-              <span>Delete</span>
+              Cancel
             </Button>
-          </div>
-        </div>
-      )}
-
-      {error && (
-        <p className="text-sm text-rose-400" role="alert">
-          {error}
-        </p>
-      )}
+            <Button onClick={submitRename} disabled={pending}>
+              {pending ? 'Saving…' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
         <AlertDialogContent>
@@ -265,6 +337,6 @@ export function WatchlistsTabs({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   )
 }

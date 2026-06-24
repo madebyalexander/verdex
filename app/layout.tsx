@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "StockSense AI",
+  title: "Verdex",
   description: "AI-powered stock forecasting and analysis.",
 };
 
@@ -22,8 +22,18 @@ export default function RootLayout({
     <html
       lang="en"
       data-theme="dark"
+      data-ux="technical"
       className={`dark ${inter.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        {/* No-flash: apply the saved display mode before first paint. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var m=localStorage.getItem('ux-mode');if(m==='simple'||m==='technical')document.documentElement.dataset.ux=m;}catch(e){}`,
+          }}
+        />
+      </head>
       <body
         className="min-h-full flex flex-col bg-background text-foreground"
         suppressHydrationWarning

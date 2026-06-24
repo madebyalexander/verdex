@@ -1,10 +1,10 @@
 'use client'
 
 import { useTransition } from 'react'
-import { Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { deletePosition } from '@/app/(app)/portfolio/actions'
+import { IoTrash as Trash } from 'react-icons/io5'
 
 export function DeletePositionButton({ id }: { id: string }) {
   const [pending, startTransition] = useTransition()
@@ -25,7 +25,7 @@ export function DeletePositionButton({ id }: { id: string }) {
       }}
       aria-label="Delete position"
     >
-      <Trash2 aria-hidden className="size-3.5" />
+      <Trash aria-hidden className="size-3.5" />
     </Button>
   )
 }

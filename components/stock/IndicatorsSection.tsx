@@ -1,4 +1,3 @@
-import { Check, X } from 'lucide-react'
 import {
   Card,
   CardContent,
@@ -7,13 +6,20 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { getDailyOhlcv, AlphaVantageError } from '@/lib/apis/alpha-vantage'
+import {
+  getDailyOhlcv,
+  AlphaVantageError,
+  AlphaVantageRateLimitError,
+} from '@/lib/apis/alpha-vantage'
 import {
   summarizeIndicators,
   type IndicatorsSummary,
 } from '@/lib/indicators'
 import { cn } from '@/lib/utils'
 import { usd } from '@/lib/format'
+import { InfoTip } from '@/components/ui/info-tip'
+import type { GlossaryKey } from '@/lib/glossary'
+import { IoCheckmark as Check, IoClose as Xmark, IoTime as Clock } from 'react-icons/io5'
 
 export async function IndicatorsSection({ symbol }: { symbol: string }) {
   let summary: IndicatorsSummary
@@ -21,6 +27,9 @@ export async function IndicatorsSection({ symbol }: { symbol: string }) {
     const bars = await getDailyOhlcv(symbol)
     summary = summarizeIndicators(bars)
   } catch (err) {
+    if (err instanceof AlphaVantageRateLimitError) {
+      return <RateLimitedCard />
+    }
     const message =
       err instanceof AlphaVantageError
         ? err.message
@@ -44,6 +53,7 @@ export async function IndicatorsSection({ symbol }: { symbol: string }) {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <IndicatorTile
             label="RSI (14)"
+            info="rsi"
             value={summary.rsi_14?.toFixed(1) ?? '—'}
             chip={
               summary.signals.rsi ? (
@@ -55,6 +65,7 @@ export async function IndicatorsSection({ symbol }: { symbol: string }) {
           />
           <IndicatorTile
             label="MACD"
+            info="macd"
             value={summary.macd ? summary.macd.line.toFixed(2) : '—'}
             chip={
               summary.signals.macd ? (
@@ -70,11 +81,13 @@ export async function IndicatorsSection({ symbol }: { symbol: string }) {
           />
           <IndicatorTile
             label="ATR (14)"
+            info="atr"
             value={summary.atr_14 ? usd(summary.atr_14) : '—'}
             sublabel="avg true range"
           />
           <IndicatorTile
             label="Range position"
+            info="rangePosition"
             value={
               summary.price_vs_range_pct != null
                 ? `${summary.price_vs_range_pct.toFixed(0)}%`
@@ -86,8 +99,9 @@ export async function IndicatorsSection({ symbol }: { symbol: string }) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <p className="text-xs uppercase tracking-wide font-medium text-muted-foreground">
+            <p className="flex items-center gap-1 text-xs uppercase tracking-wide font-medium text-muted-foreground">
               Moving averages
+              <InfoTip term="movingAverage" />
             </p>
             <SmaRow
               period={20}
@@ -116,7 +130,7 @@ export async function IndicatorsSection({ symbol }: { symbol: string }) {
                   {summary.signals.sma_cross_50_200 === 'golden' ? (
                     <Check aria-hidden className="size-3" />
                   ) : (
-                    <X aria-hidden className="size-3" />
+                    <Xmark aria-hidden className="size-3" />
                   )}
                   <span>
                     {summary.signals.sma_cross_50_200 === 'golden'
@@ -128,8 +142,9 @@ export async function IndicatorsSection({ symbol }: { symbol: string }) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <p className="text-xs uppercase tracking-wide font-medium text-muted-foreground">
+            <p className="flex items-center gap-1 text-xs uppercase tracking-wide font-medium text-muted-foreground">
               Bollinger bands (20, 2σ)
+              <InfoTip term="bollinger" />
             </p>
             {summary.bollinger ? (
               <>
@@ -196,19 +211,22 @@ function ToneBadge({
 
 function IndicatorTile({
   label,
+  info,
   value,
   chip,
   sublabel,
 }: {
   label: string
+  info?: GlossaryKey
   value: string
   chip?: React.ReactNode
   sublabel?: string
 }) {
   return (
-    <div className="p-3 rounded-md flex flex-col gap-1 bg-secondary">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+    <div className="flex flex-col gap-1 rounded-md bg-foreground/[0.03] p-3 ring-1 ring-inset ring-border/40">
+      <p className="flex items-center gap-1 text-xs uppercase tracking-wide text-muted-foreground">
         {label}
+        {info && <InfoTip term={info} />}
       </p>
       <p className="text-lg font-semibold tabular-nums">{value}</p>
       {chip ?? (
@@ -261,6 +279,32 @@ function ErrorCard({ message }: { message: string }) {
       </CardHeader>
       <CardContent className="text-sm py-6 text-center rounded-md text-muted-foreground bg-secondary">
         {message}
+      </CardContent>
+    </Card>
+  )
+}
+
+function RateLimitedCard() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Technical indicators</CardTitle>
+        <CardDescription>Alpha Vantage</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-col items-center gap-3 py-8 text-center">
+          <span
+            aria-hidden
+            className="inline-flex items-center justify-center size-12 rounded-full bg-amber-500/10 text-amber-400"
+          >
+            <Clock className="size-6" />
+          </span>
+          <p className="text-sm font-medium">Daily quota reached</p>
+          <p className="text-sm max-w-xs text-muted-foreground">
+            Alpha Vantage&apos;s free tier allows 25 requests per day.
+            Indicators will resume tomorrow.
+          </p>
+        </div>
       </CardContent>
     </Card>
   )

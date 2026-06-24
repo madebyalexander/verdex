@@ -1,4 +1,4 @@
-# StockSense AI — Project Rules
+# Verdex — Project Rules
 
 > AI-powered stock forecasting web app. Full spec: [SPEC.md](./SPEC.md).
 > This file is auto-loaded by Claude Code on every session. Keep it tight.
@@ -14,7 +14,7 @@
    **Visual identity — non-negotiable:**
    - **Dark mode ONLY.** No light theme, no system-preference fallback, no theme toggle anywhere in the UI. Do not install `next-themes` or any other theme switcher. Dark mode is hardcoded via `data-theme="dark"` + `class="dark"` on `<html>` in [app/layout.tsx](./app/layout.tsx).
    - **Tailwind v4 dark variant:** Tailwind v4 ties `dark:` to `prefers-color-scheme` by default. We override with `@custom-variant dark (&:where(.dark, .dark *));` in [app/globals.css](./app/globals.css) so `dark:` keys off our hardcoded `.dark` class. Do not remove that custom variant.
-   - **Brand accent: purple `#9353D3`.** Mapped to shadcn's `--primary` CSS variable in [app/globals.css](./app/globals.css). Buttons use `variant="default"` (which reads `--primary`); apply the purple accent for: primary buttons, links, focus rings, AI-related highlights (forecast badges, AI insights), active nav item, brand logo.
+   - **Brand accent: purple from the shadcn "Purple" preset** (applied via `npx shadcn@latest apply --preset b4P7eq8m8`). The values live in [app/globals.css](./app/globals.css). We override the preset's dark-mode `--primary` from its default deep `oklch(0.438 0.218 303.724)` to the brighter `oklch(0.627 0.265 303.9)` ≈ `#ad46ff` so the brand reads visibly on dark surfaces — that single token now drives buttons, badges, sidebar accents, active nav items, focus rings, and ticker links. The chart palette uses `--chart-1..5` as the preset shipped them. Buttons use `variant="default"` (which reads `--primary`); apply the purple accent for: primary buttons, links, focus rings, AI-related highlights (forecast badges, AI insights), active nav item, brand logo.
    - **Semantic colors for stock direction stay separate:** `emerald-*` (green) for "up" / `rose-*` (red) for "down" on price changes, chart fills, and P/L — see [components/ui/change-badge.tsx](./components/ui/change-badge.tsx). Do NOT replace these with purple — they are functional, not decorative.
    - **Font: Inter only.** All font CSS variables (`--font-sans`, `--font-mono`, `--font-heading`) point at the Inter Next/font variable. Do not add additional Google Fonts without explicit user approval.
 
@@ -44,7 +44,7 @@ If any of these are missing, stop and ask the user before scaffolding features.
 
 Follow strictly. Mark each item complete only after it works end-to-end in the browser with REAL APIs.
 
-1. Project scaffold: Next.js + TS + Tailwind v4 + shadcn/ui wired with dark theme hardcoded + purple `#9353D3` accent (`--primary` override). ✅ Done.
+1. Project scaffold: Next.js + TS + Tailwind v4 + shadcn/ui wired with dark theme hardcoded + the shadcn "Purple" preset (b4P7eq8m8) for the brand palette. ✅ Done.
 2. Supabase client + auth flow (email + Google OAuth) + `profiles` row creation on signup. ✅ Done.
 3. `/api/search?q=` proxying Finnhub `symbol_lookup` via Redis cache (15 min TTL). ✅ Done.
 4. `/api/stocks/[symbol]` returning quote + profile + logo, cached per SPEC §10. ✅ Done.

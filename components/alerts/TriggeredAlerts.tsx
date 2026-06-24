@@ -1,7 +1,7 @@
-import { AlertTriangle } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { checkAndTriggerAlerts } from '@/lib/alerts'
+import { IoWarning as WarningTriangle } from 'react-icons/io5'
 
 export async function TriggeredAlerts({
   symbol,
@@ -21,7 +21,7 @@ export async function TriggeredAlerts({
             variant="outline"
             className="border-transparent bg-amber-500/10 text-amber-400 ring-1 ring-inset ring-amber-500/20 gap-1"
           >
-            <AlertTriangle aria-hidden className="size-3" />
+            <WarningTriangle aria-hidden className="size-3" />
             <span>Alert triggered</span>
           </Badge>
           <span className="text-sm font-medium">

@@ -12,7 +12,7 @@ import {
 import { usd } from '@/lib/format'
 
 const COLORS = [
-  '#9353D3', // primary purple
+  '#ad46ff', // brand purple — matches preset --chart-2 / --sidebar-primary
   '#0EA5E9', // sky-500
   '#F59E0B', // amber-500
   '#EC4899', // pink-500
