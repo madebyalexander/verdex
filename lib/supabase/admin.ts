@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { supabaseEnv, supabaseServiceRoleKey } from '@/lib/supabase/env'
 
 // Service-role client — bypasses Row-Level Security.
 // Server-only. Use for cron pre-warming, webhook handlers, admin ops.
@@ -10,11 +11,9 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 let client: SupabaseClient | null = null
 function getClient(): SupabaseClient {
   if (!client) {
-    client = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    )
+    client = createClient(supabaseEnv().url, supabaseServiceRoleKey(), {
+      auth: { autoRefreshToken: false, persistSession: false },
+    })
   }
   return client
 }

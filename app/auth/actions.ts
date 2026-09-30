@@ -5,6 +5,11 @@ import { headers } from 'next/headers'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { authRatelimit } from '@/lib/ratelimit'
+import {
+  isSupabaseUnreachable,
+  SUPABASE_UNREACHABLE,
+} from '@/lib/supabase/env'
+import type { AuthError } from '@supabase/supabase-js'
 
 const CredentialsSchema = z.object({
   email: z.email(),
@@ -48,6 +53,15 @@ function appUrl(path: string): string | undefined {
   return base ? `${base}${path}` : undefined
 }
 
+/** User-facing message for an auth error; outages get an actionable hint and a server log. */
+function authErrorMessage(error: AuthError): string {
+  if (isSupabaseUnreachable(error)) {
+    console.error(`[auth] ${SUPABASE_UNREACHABLE} (${error.message})`)
+    return SUPABASE_UNREACHABLE
+  }
+  return error.message
+}
+
 /** Only allow same-site relative paths as post-auth destinations (no open redirects). */
 function safeNext(value: FormDataEntryValue | null): string {
   const next = typeof value === 'string' ? value : ''
@@ -71,7 +85,7 @@ export async function signInWithPassword(
 
   const supabase = await createClient()
   const { error } = await supabase.auth.signInWithPassword(parsed.data)
-  if (error) return { error: error.message }
+  if (error) return { error: authErrorMessage(error) }
 
   redirect(safeNext(formData.get('next')))
 }
@@ -97,7 +111,7 @@ export async function signUpWithPassword(
     ...parsed.data,
     options: { emailRedirectTo: appUrl('/auth/callback') },
   })
-  if (error) return { error: error.message }
+  if (error) return { error: authErrorMessage(error) }
 
   // With email confirmation enabled, signing up an *existing* email returns a
   // success-shaped response with an empty `identities` array (Supabase does this
@@ -132,7 +146,7 @@ export async function resendConfirmation(
     email: email.data,
     options: { emailRedirectTo: appUrl('/auth/callback') },
   })
-  if (error) return { error: error.message, email: email.data }
+  if (error) return { error: authErrorMessage(error), email: email.data }
   return {
     info: 'Confirmation email resent — check your inbox.',
     email: email.data,
@@ -182,7 +196,7 @@ export async function updatePassword(
   }
 
   const { error } = await supabase.auth.updateUser({ password: parsed.data })
-  if (error) return { error: error.message }
+  if (error) return { error: authErrorMessage(error) }
 
   redirect('/dashboard')
 }

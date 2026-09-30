@@ -1,12 +1,18 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import {
+  isSupabaseUnreachable,
+  supabaseEnv,
+  SUPABASE_UNREACHABLE,
+} from '@/lib/supabase/env'
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request })
+  const { url: supabaseUrl, anonKey } = supabaseEnv()
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    anonKey,
     {
       cookies: {
         getAll() {
@@ -28,7 +34,11 @@ export async function proxy(request: NextRequest) {
   // Refreshes the session cookie if expired. MUST stay here per @supabase/ssr docs.
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser()
+  if (error && isSupabaseUnreachable(error)) {
+    console.error(`[proxy] ${SUPABASE_UNREACHABLE} (${error.message})`)
+  }
 
   const path = request.nextUrl.pathname
   const isAuthPage = path === '/login' || path === '/signup'
