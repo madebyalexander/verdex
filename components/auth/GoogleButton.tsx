@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
+import { FcGoogle as GoogleIcon } from 'react-icons/fc'
 
 export function GoogleButton() {
   const supabase = createClient()
@@ -28,11 +29,13 @@ export function GoogleButton() {
   return (
     <Button
       variant="outline"
+      size="lg"
       className="w-full"
       onClick={handleClick}
       disabled={pending}
     >
-      Continue with Google
+      <GoogleIcon aria-hidden className="size-4" />
+      {pending ? 'Redirecting to Google…' : 'Continue with Google'}
     </Button>
   )
 }

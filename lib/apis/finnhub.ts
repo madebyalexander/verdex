@@ -381,3 +381,34 @@ export async function getProfile(symbol: string): Promise<FinnhubProfile> {
     return profile
   })
 }
+
+// ---------------------------------------------------------------------
+// /stock/market-status — US session state (1 min TTL, same as indices)
+// ---------------------------------------------------------------------
+
+const FinnhubMarketStatusSchema = z.object({
+  exchange: z.string(),
+  holiday: z.string().nullable().optional(),
+  isOpen: z.boolean(),
+  session: z.string().nullable().optional(),
+  timezone: z.string().optional(),
+  t: z.number(),
+})
+
+export type FinnhubMarketStatus = z.infer<typeof FinnhubMarketStatusSchema>
+
+export async function getMarketStatus(): Promise<FinnhubMarketStatus> {
+  return cache('finnhub:market-status:US', 60, async () => {
+    const url = new URL(`${FINNHUB_BASE}/stock/market-status`)
+    url.searchParams.set('exchange', 'US')
+    url.searchParams.set('token', apiKey())
+
+    const res = await fetch(url, { cache: 'no-store' })
+    if (!res.ok) {
+      throw new Error(
+        `Finnhub /stock/market-status ${res.status}: ${await res.text()}`
+      )
+    }
+    return FinnhubMarketStatusSchema.parse(await res.json())
+  })
+}

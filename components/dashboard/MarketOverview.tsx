@@ -13,8 +13,9 @@ import {
   WATCHLIST_KEY,
   type MarketStock,
 } from '@/lib/market-universe'
-import { cn } from '@/lib/utils'
-import { IoStar as Star } from 'react-icons/io5'
+import { FilterChip, ChipRow } from '@/components/ui/filter-chip'
+import { EmptyState } from '@/components/ui/empty-state'
+import { IoStar as Star, IoWarning as Warning } from 'react-icons/io5'
 
 export function MarketOverview({ initialSector }: { initialSector?: string }) {
   const [sector, setSector] = useState(initialSector ?? DEFAULT_MARKET_SECTOR)
@@ -49,31 +50,14 @@ export function MarketOverview({ initialSector }: { initialSector?: string }) {
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Watchlist + sector filter chips */}
-      <div className="flex flex-wrap gap-1.5">
-        {[WATCHLIST_KEY, ...MARKET_SECTORS].map((s) => {
-          const active = s === sector
-          const isWatchlist = s === WATCHLIST_KEY
-          return (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setSector(s)}
-              aria-pressed={active}
-              className={cn(
-                'inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-xs font-medium ring-1 ring-inset transition-colors',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
-                active
-                  ? 'bg-primary/10 text-primary ring-primary/30'
-                  : 'bg-secondary text-muted-foreground ring-border hover:bg-secondary/70 hover:text-foreground'
-              )}
-            >
-              {isWatchlist && <Star aria-hidden className="size-3" />}
-              {s}
-            </button>
-          )
-        })}
-      </div>
+      <ChipRow role="toolbar" aria-label="Filter by watchlist or sector">
+        {[WATCHLIST_KEY, ...MARKET_SECTORS].map((s) => (
+          <FilterChip key={s} active={s === sector} onClick={() => setSector(s)}>
+            {s === WATCHLIST_KEY && <Star aria-hidden className="size-3" />}
+            {s}
+          </FilterChip>
+        ))}
+      </ChipRow>
 
       <Card variant="list">
         <CardContent className="px-0">
@@ -83,11 +67,21 @@ export function MarketOverview({ initialSector }: { initialSector?: string }) {
           {loading || stocks === null ? (
             <StockSkeletonRows />
           ) : stocks.length === 0 ? (
-            <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-              {sector === WATCHLIST_KEY
-                ? 'Your watchlist is empty. Add stocks from any detail page, or pick a sector above.'
-                : `Couldn't load ${sector} stocks. Try another sector.`}
-            </p>
+            <EmptyState
+              icon={sector === WATCHLIST_KEY ? Star : Warning}
+              tone={sector === WATCHLIST_KEY ? 'brand' : 'warning'}
+              title={
+                sector === WATCHLIST_KEY
+                  ? 'Your watchlist is empty'
+                  : `Couldn't load ${sector}`
+              }
+              description={
+                sector === WATCHLIST_KEY
+                  ? 'Tap the star on any stock page to follow it here — or pick a sector above.'
+                  : 'The data provider may be rate-limiting. Try another sector or check back shortly.'
+              }
+              className="border-t border-border py-10"
+            />
           ) : (
             <ul className="divide-y divide-border border-t border-border">
               {stocks.map((stock) => (

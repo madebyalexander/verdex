@@ -14,7 +14,7 @@ export async function TriggeredAlerts({
   if (triggered.length === 0) return null
 
   return (
-    <Card className="border-amber-500/30 bg-amber-500/5">
+    <Card size="sm" className="bg-amber-500/[0.06] ring-amber-500/25">
       <CardContent className="flex flex-col gap-2 py-3">
         <div className="flex items-center gap-2">
           <Badge

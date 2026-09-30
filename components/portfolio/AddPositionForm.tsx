@@ -183,9 +183,9 @@ export function AddPositionForm() {
         </div>
 
         {showPriceStrip && (
-          <div className="flex flex-col gap-2 rounded-md border border-dashed border-border bg-secondary/30 px-3 py-2.5">
+          <div className="flex flex-col gap-2 rounded-xl border border-dashed border-white/10 bg-white/[0.02] px-3 py-2.5">
             <div className="flex items-center justify-between gap-3 flex-wrap">
-              <span className="text-xs uppercase tracking-wide font-medium text-muted-foreground">
+              <span className="text-xs font-medium text-muted-foreground">
                 {priceState === 'loading' && 'Fetching live price…'}
                 {priceState === 'unavailable' &&
                   `Couldn't fetch a live price for ${symbol.trim().toUpperCase()}`}
@@ -217,13 +217,14 @@ export function AddPositionForm() {
         )}
       </CardContent>
       {error && (
-        <div className="px-6 pb-2 text-sm text-rose-400" role="alert">
+        <div className="px-5 text-sm text-rose-400" role="alert">
           {error}
         </div>
       )}
       <CardFooter>
         <Button
           type="submit"
+          size="lg"
           disabled={!symbol || !quantity || !costBasis || pending}
         >
           {pending ? 'Adding…' : 'Add position'}
@@ -247,7 +248,7 @@ function Field({
     <div className="flex flex-col gap-1.5">
       <label
         htmlFor={id}
-        className="text-xs uppercase tracking-wide font-medium text-muted-foreground"
+        className="text-xs font-medium text-muted-foreground"
       >
         {label}
       </label>

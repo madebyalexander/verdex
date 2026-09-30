@@ -57,7 +57,7 @@ export function AISection({ riskProfile }: { riskProfile: RiskProfile }) {
                 onClick={() => setProfile(o.value)}
                 disabled={pending}
                 className={cn(
-                  'flex flex-col items-start gap-1 rounded-md px-3 py-2.5 text-left ring-inset transition-colors',
+                  'flex flex-col items-start gap-1 rounded-xl px-3.5 py-3 text-left ring-inset transition-colors',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
                   'disabled:opacity-50 disabled:pointer-events-none',
                   active

@@ -12,9 +12,9 @@ import { GoogleButton } from '@/components/auth/GoogleButton'
 
 export default function SignupPage() {
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="w-full max-w-sm gap-6 py-7 shadow-2xl shadow-black/40">
       <CardHeader>
-        <CardTitle>Create your account</CardTitle>
+        <CardTitle className="text-xl">Create your account</CardTitle>
         <CardDescription>
           Get AI-powered forecasts on every stock you track.
         </CardDescription>
@@ -33,7 +33,7 @@ export default function SignupPage() {
           Already have an account?{' '}
           <Link
             href="/login"
-            className="text-primary underline underline-offset-2"
+            className="font-medium text-primary hover:text-primary/80"
           >
             Sign in
           </Link>

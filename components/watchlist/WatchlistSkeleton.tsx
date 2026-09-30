@@ -20,7 +20,7 @@ export function WatchlistSkeleton({ rows = 6 }: { rows?: number }) {
       <CardContent className="px-0">
         <ul className="divide-y divide-border">
           {Array.from({ length: rows }).map((_, i) => (
-            <li key={i} className="flex items-center gap-4 px-6 py-3">
+            <li key={i} className="flex items-center gap-4 px-5 py-3">
               <div className="size-9 rounded-md bg-muted animate-pulse shrink-0" />
               <div className="flex-1 flex flex-col gap-1.5 min-w-0">
                 <div className="h-4 w-16 rounded bg-muted animate-pulse" />

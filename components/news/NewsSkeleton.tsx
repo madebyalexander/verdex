@@ -18,7 +18,7 @@ export function NewsSkeleton({ rows = 8 }: { rows?: number }) {
       <CardContent className="px-0">
         <ul className="divide-y divide-border">
           {Array.from({ length: rows }).map((_, i) => (
-            <li key={i} className="px-6 py-3 flex flex-col gap-2">
+            <li key={i} className="px-5 py-3 flex flex-col gap-2">
               <div className="h-4 w-[90%] rounded bg-muted animate-pulse" />
               <div className="h-4 w-[55%] rounded bg-muted animate-pulse" />
               <div className="flex items-center gap-2">

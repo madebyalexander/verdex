@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { SymbolBadge } from '@/components/ui/symbol-badge'
+import { FilterChip } from '@/components/ui/filter-chip'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -181,7 +182,7 @@ export function NewsFeed({
             </span>
           </div>
 
-          <div className="flex h-2 w-full overflow-hidden rounded-full bg-secondary">
+          <div className="flex h-2 w-full gap-0.5 overflow-hidden rounded-full bg-white/[0.05]">
             {(['positive', 'negative', 'neutral'] as Sentiment[]).map((s) =>
               counts[s] > 0 ? (
                 <div
@@ -220,7 +221,7 @@ export function NewsFeed({
         <div className="flex flex-wrap items-center gap-2">
           {tickers.length > 0 && (
             <DropdownMenu>
-              <DropdownMenuTrigger className="inline-flex h-7 items-center gap-1.5 rounded-full border border-border bg-secondary px-2.5 text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
+              <DropdownMenuTrigger className="inline-flex h-7 items-center gap-1.5 rounded-full bg-white/[0.03] px-3 text-xs font-medium text-muted-foreground ring-1 ring-inset ring-white/[0.07] transition-colors hover:bg-white/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60">
                 {ticker === 'all' ? 'All tickers' : ticker}
                 <ChevronDown aria-hidden className="size-3.5" />
               </DropdownMenuTrigger>
@@ -265,7 +266,7 @@ export function NewsFeed({
           {groups.map((g) => (
             <Card key={g.label} variant="list" className="py-3">
               <CardContent className="px-0">
-                <div className="px-6 pb-3 pt-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <div className="px-5 pb-3 pt-1 text-xs font-medium text-muted-foreground">
                   {g.label}
                 </div>
                 <ul className="divide-y divide-border border-t border-border">
@@ -298,20 +299,9 @@ function MoodPill({
   children: React.ReactNode
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={cn(
-        'inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium ring-1 ring-inset transition-colors',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
-        active
-          ? 'bg-primary/15 text-primary ring-primary/30'
-          : 'bg-secondary text-muted-foreground ring-border hover:bg-secondary/70 hover:text-foreground'
-      )}
-    >
+    <FilterChip active={active} onClick={onClick} className="h-7 px-3">
       {children}
-    </button>
+    </FilterChip>
   )
 }
 
@@ -324,11 +314,11 @@ function FeaturedStory({
 }) {
   const m = SENTIMENT_META[article.sentiment]
   return (
-    <Card className="overflow-hidden py-0 bg-gradient-to-br from-primary/[0.07] via-card to-card ring-1 ring-primary/20">
+    <Card className="overflow-hidden py-0 bg-gradient-to-br from-primary/[0.08] via-card to-card ring-primary/20">
       <CardContent className="flex flex-col gap-4 py-5">
         {/* Eyebrow */}
         <div className="flex items-center gap-2 text-xs">
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
             <Flame aria-hidden className="size-3" />
             Top story
           </span>
@@ -398,7 +388,7 @@ function ArticleRow({
 }) {
   const m = SENTIMENT_META[article.sentiment]
   return (
-    <div className={cn('border-l-2 px-6 py-3', m.accent)}>
+    <div className={cn('border-l-2 px-5 py-3', m.accent)}>
       <a
         href={article.url}
         target="_blank"

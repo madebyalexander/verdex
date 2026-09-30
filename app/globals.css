@@ -118,36 +118,77 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
+  /* Surfaces — near-black canvas with one lighter step per elevation level
+   * (docs/ARCHITECTURE.md §12: background #0a0a0c / card #131316). */
+  --background: #0a0a0c;
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
+  --card: #131316;
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
+  --popover: #17171b;
   --popover-foreground: oklch(0.985 0 0);
   /* Brand purple #AD46FF — drives buttons, badges, focus rings, selected states. */
   --primary: #ad46ff;
-  --primary-foreground: oklch(0.977 0.014 308.299);
-  --secondary: oklch(0.274 0.006 286.033);
+  --primary-foreground: oklch(0.985 0.01 308);
+  --secondary: #1c1c21;
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
+  --muted: #1c1c21;
+  --muted-foreground: #a1a1aa;
   --accent: #ad46ff;
   --accent-foreground: oklch(0.977 0.014 308.299);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
+  --border: rgb(255 255 255 / 8%);
+  --input: rgb(255 255 255 / 11%);
   --ring: #ad46ff;
   --chart-1: oklch(0.827 0.119 306.383);
   --chart-2: #ad46ff;
   --chart-3: oklch(0.558 0.288 302.321);
   --chart-4: oklch(0.496 0.265 301.924);
   --chart-5: oklch(0.438 0.218 303.724);
-  --sidebar: oklch(0.205 0 0);
+  --sidebar: #060608;
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: #ad46ff;
   --sidebar-primary-foreground: oklch(0.977 0.014 308.299);
-  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent: rgb(255 255 255 / 6%);
   --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-border: rgb(255 255 255 / 6%);
+  --sidebar-ring: #ad46ff;
+}
+
+@layer base {
+  html {
+    /* Inter: single-storey "a" + contextual alternates for a cleaner UI read. */
+    font-feature-settings: "cv11", "calt";
+    text-rendering: optimizeLegibility;
+    scrollbar-color: var(--border) transparent;
+    scrollbar-width: thin;
+  }
+  ::selection {
+    background: color-mix(in oklch, var(--primary) 40%, transparent);
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+}
+
+/* Soft brand glow used behind AI-generated surfaces (forecasts, insights). */
+@utility ai-glow {
+  background-image:
+    radial-gradient(120% 90% at 0% 0%, color-mix(in oklch, var(--primary) 18%, transparent) 0%, transparent 60%),
+    radial-gradient(80% 60% at 100% 100%, color-mix(in oklch, var(--primary) 7%, transparent) 0%, transparent 70%);
+}
+
+/* 1px top highlight that makes dark cards read as lit from above. */
+@utility surface-highlight {
+  /* Composes with ring-* (both feed Tailwind's shared box-shadow stack). */
+  @apply inset-shadow-[0_1px_0_0_rgb(255_255_255/0.05)];
+}
+
+/* Hide scrollbars on horizontally scrolling chip rows while keeping them scrollable. */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }

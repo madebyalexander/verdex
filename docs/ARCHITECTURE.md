@@ -339,9 +339,9 @@ Implementation: a thin `cache(key, ttl, fetcher)` wrapper in `lib/cache.ts` — 
 > shadcn/ui components are generated locally into [components/ui/](./components/ui/) — we own the source and can edit them freely. Built on `@base-ui/react` primitives (note: `asChild` is NOT supported; trigger components use `render` props, or use controlled `open` state with regular `Button` instead). Use the standard `cn(...)` helper from [lib/utils.ts](./lib/utils.ts) for class composition.
 
 ### Layout
-- Custom app shell in [app/(app)/layout.tsx](./app/(app)/layout.tsx): top bar with brand logo, horizontal nav links, global `StockSearch`, and `SignOutButton`. On mobile (<sm) the brand text and email collapse and the nav scrolls horizontally with a hidden scrollbar.
-- Cmd+K global stock search — currently inline `StockSearch` autocomplete; full command-palette deferred.
-- Content uses `Card` containers; KPI metric blocks are `Card` + custom grid.
+- App shell in [app/(app)/layout.tsx](./app/(app)/layout.tsx): collapsible `AppSidebar` (nav grouped into Overview / Your money / Research, config in `components/layout/nav-items.ts`), a blurred top bar with the ⌘K `GlobalSearch` command palette (stocks, investors, pages), the live `MarketStatus` pill (Finnhub `/stock/market-status`, 60s cache) and the Simple/Technical `UxToggle`. On phones the sidebar becomes a sheet opened from the `MobileTabBar` bottom navigation.
+- `AppFooter` renders the §15 disclaimer at the end of every app page.
+- Content uses `Card` containers inside `PageContainer` / `PageHeader`. Shared building blocks: `FilterChip` / `ChipRow` / `Segmented` ([components/ui/filter-chip.tsx](./components/ui/filter-chip.tsx)) for filters and ranges, `EmptyState` for zero-data and error states, and `AICard` / `AIBadge` / `ConfidenceMeter` / `ForecastRangeBar` ([components/ui/ai-card.tsx](./components/ui/ai-card.tsx)) for every AI surface.
 
 ### Stock detail page
 - Header row inside a `Card`: logo `<img>` + name + sector `Badge` + price (`<span className="tabular-nums">`) + custom `ChangeBadge` (green / red percentage pill)
@@ -391,8 +391,8 @@ Implementation: a thin `cache(key, ttl, fetcher)` wrapper in `lib/cache.ts` — 
 - **Semantic colors (separate from the accent — do NOT replace with purple):**
   - "Up" / positive change: `emerald-400` text + `emerald-500/10` bg + `ring-emerald-500/20`
   - "Down" / negative change: `rose-400` text + `rose-500/10` bg + `ring-rose-500/20`
-  - Both encoded in [components/ui/change-badge.tsx](./components/ui/change-badge.tsx) — never inline these classes elsewhere; always import `ChangeBadge`.
-- Background palette: `--background` `#0a0a0c` (near-black) / `--card` `#131316` / `--border` `#27272a`. Surface elevation via the lighter card background, not via heavy borders.
+  - Both encoded in [components/ui/change-badge.tsx](./components/ui/change-badge.tsx) — never inline these classes elsewhere; import `ChangeBadge` (pill), `ChangeText` (inline "+$2.31 (+1.24%)" next to large figures) or the `directionText` / `directionBg` helpers.
+- Background palette: `--background` `#0a0a0c` (near-black) / `--card` `#131316` / `--border` white at 8%. Surface elevation via the lighter card background plus a 1px top highlight (`surface-highlight` utility), not via heavy borders. AI surfaces add the `ai-glow` utility (soft brand-purple radial wash).
 - Data density: tabular numbers (`tabular-nums`) on all price, percentage, and metric values for proper alignment.
 - Formatting: all currency / compact-number / percent formatting MUST go through [lib/format.ts](./lib/format.ts) (`usd`, `compactUsd`, `compactNum`, `pct`). Do not define new `Intl.NumberFormat` instances at call sites.
 

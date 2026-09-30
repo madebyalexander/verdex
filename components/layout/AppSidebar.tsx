@@ -3,15 +3,13 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import type { ComponentType, SVGProps } from 'react'
-
-type IconComponent = ComponentType<SVGProps<SVGSVGElement>>
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -29,34 +27,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { signOut } from '@/app/auth/actions'
+import { NAV_GROUPS, isActivePath } from '@/components/layout/nav-items'
 import {
-  IoGrid as Dashboard,
-  IoStatsChart as Markets,
-  IoStar as Star,
-  IoBriefcase as Suitcase,
-  IoGitMerge as Combine,
-  IoDocumentText as JournalPage,
-  IoPeople as Community,
   IoLogOut as LogOut,
   IoSettings as Settings,
-  IoChevronForward as ChevronRight,
+  IoEllipsisHorizontal as More,
 } from 'react-icons/io5'
-
-type NavItem = {
-  href: string
-  label: string
-  icon: IconComponent
-}
-
-const NAV_ITEMS: NavItem[] = [
-  { href: '/dashboard', label: 'Dashboard', icon: Dashboard },
-  { href: '/market', label: 'Markets', icon: Markets },
-  { href: '/watchlist', label: 'Watchlist', icon: Star },
-  { href: '/portfolio', label: 'Portfolio', icon: Suitcase },
-  { href: '/compare', label: 'Compare', icon: Combine },
-  { href: '/news', label: 'News', icon: JournalPage },
-  { href: '/investors', label: 'Investors', icon: Community },
-]
 
 export function AppSidebar({ userEmail }: { userEmail: string }) {
   const pathname = usePathname()
@@ -75,6 +51,7 @@ export function AppSidebar({ userEmail }: { userEmail: string }) {
             <SidebarMenuButton
               size="lg"
               tooltip="Verdex"
+              className="hover:bg-transparent active:bg-transparent"
               render={
                 <Link
                   href="/dashboard"
@@ -83,21 +60,23 @@ export function AppSidebar({ userEmail }: { userEmail: string }) {
                 />
               }
             >
-              <Image
-                src="/verdex-mark-white.svg"
-                alt=""
-                width={26}
-                height={26}
-                priority
-                unoptimized
-                className="size-[26px] shrink-0"
-              />
+              <span className="relative flex size-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/35 to-primary/5 ring-1 ring-inset ring-primary/40">
+                <Image
+                  src="/verdex-mark-white.svg"
+                  alt=""
+                  width={18}
+                  height={18}
+                  priority
+                  unoptimized
+                  className="size-[18px]"
+                />
+              </span>
               <div className="grid flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
-                <span className="truncate font-semibold tracking-tight">
+                <span className="truncate text-[15px] font-semibold tracking-tight">
                   Verdex
                 </span>
-                <span className="truncate text-xs text-muted-foreground">
-                  AI Forecasts
+                <span className="truncate text-[11px] text-muted-foreground">
+                  AI stock forecasts
                 </span>
               </div>
             </SidebarMenuButton>
@@ -106,34 +85,39 @@ export function AppSidebar({ userEmail }: { userEmail: string }) {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-                const isActive =
-                  pathname === href || pathname.startsWith(`${href}/`)
-                return (
-                  <SidebarMenuItem key={href}>
-                    <SidebarMenuButton
-                      isActive={isActive}
-                      tooltip={label}
-                      render={
-                        <Link
-                          href={href}
-                          aria-current={isActive ? 'page' : undefined}
-                          onClick={closeOnMobile}
-                        />
-                      }
-                    >
-                      <Icon aria-hidden />
-                      <span>{label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {NAV_GROUPS.map((group) => (
+          <SidebarGroup key={group.label} className="py-1">
+            <SidebarGroupLabel className="text-[11px] tracking-wide text-muted-foreground/70">
+              {group.label}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map(({ href, label, icon: Icon }) => {
+                  const isActive = isActivePath(pathname, href)
+                  return (
+                    <SidebarMenuItem key={href}>
+                      <SidebarMenuButton
+                        isActive={isActive}
+                        tooltip={label}
+                        className="relative text-muted-foreground hover:text-foreground data-active:text-foreground data-active:[&>svg]:text-primary before:absolute before:top-1/2 before:left-0 before:h-4 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-primary before:opacity-0 before:transition-opacity data-active:before:opacity-100 group-data-[collapsible=icon]:before:hidden"
+                        render={
+                          <Link
+                            href={href}
+                            aria-current={isActive ? 'page' : undefined}
+                            onClick={closeOnMobile}
+                          />
+                        }
+                      >
+                        <Icon aria-hidden />
+                        <span>{label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
 
       <SidebarFooter>
@@ -152,16 +136,18 @@ export function AppSidebar({ userEmail }: { userEmail: string }) {
                       />
                     }
                   >
-                    <div className="flex aspect-square size-7 items-center justify-center rounded-md bg-secondary text-xs font-semibold uppercase shrink-0">
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/40 text-xs font-semibold uppercase text-primary-foreground">
                       {userEmail.slice(0, 1)}
-                    </div>
-                    <div className="grid flex-1 text-left leading-tight min-w-0 group-data-[collapsible=icon]:hidden">
-                      <span className="truncate text-xs text-muted-foreground">
-                        Signed in as
+                    </span>
+                    <div className="grid min-w-0 flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
+                      <span className="truncate text-sm font-medium">
+                        {userEmail.split('@')[0]}
                       </span>
-                      <span className="truncate text-sm">{userEmail}</span>
+                      <span className="truncate text-xs text-muted-foreground">
+                        {userEmail}
+                      </span>
                     </div>
-                    <ChevronRight
+                    <More
                       aria-hidden
                       className="ml-auto size-3.5 text-muted-foreground group-data-[collapsible=icon]:hidden"
                     />
@@ -169,10 +155,10 @@ export function AppSidebar({ userEmail }: { userEmail: string }) {
                 }
               />
               <DropdownMenuContent
-                side="right"
+                side={isMobile ? 'top' : 'right'}
                 align="end"
                 sideOffset={8}
-                className="w-56"
+                className="w-60"
               >
                 <DropdownMenuGroup>
                   <DropdownMenuLabel className="truncate text-xs font-normal text-muted-foreground">

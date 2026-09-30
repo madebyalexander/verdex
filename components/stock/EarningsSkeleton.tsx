@@ -20,7 +20,7 @@ export function EarningsSkeleton() {
           {Array.from({ length: 1 }).map((_, i) => (
             <li
               key={i}
-              className="flex items-center gap-4 px-6 py-3 flex-wrap"
+              className="flex items-center gap-4 px-5 py-3 flex-wrap"
             >
               <div className="flex flex-col gap-1.5 min-w-[8rem] shrink-0">
                 <div className="h-4 w-32 rounded bg-muted animate-pulse" />

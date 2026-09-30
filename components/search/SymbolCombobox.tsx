@@ -198,7 +198,7 @@ export function SymbolCombobox({
               width: coords.width,
               zIndex: 50,
             }}
-            className="rounded-md border border-border bg-popover text-popover-foreground shadow-md overflow-hidden"
+            className="overflow-hidden rounded-xl bg-popover text-popover-foreground shadow-xl ring-1 ring-white/10"
           >
             {shown.length === 0 && loading && (
               <p className="text-sm py-3 px-3 text-muted-foreground">
@@ -214,7 +214,7 @@ export function SymbolCombobox({
               <ul
                 id={listboxId}
                 role="listbox"
-                className="max-h-64 overflow-y-auto py-1"
+                className="max-h-64 overflow-y-auto p-1"
               >
                 {shown.map((r, i) => (
                   <li
@@ -228,8 +228,8 @@ export function SymbolCombobox({
                       onClick={() => pickResult(r)}
                       onMouseEnter={() => setActiveIndex(i)}
                       className={cn(
-                        'w-full text-left px-3 py-2 flex items-center gap-3 text-sm transition-colors',
-                        i === activeIndex && 'bg-secondary'
+                        'flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-sm transition-colors',
+                        i === activeIndex && 'bg-white/[0.06]'
                       )}
                     >
                       <span

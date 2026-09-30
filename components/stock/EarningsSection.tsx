@@ -45,7 +45,7 @@ export async function EarningsSection({ symbol }: { symbol: string }) {
       </CardHeader>
       <CardContent className="px-0">
         {upcoming.length === 0 ? (
-          <p className="px-6 py-6 text-center text-sm text-muted-foreground">
+          <p className="px-5 py-6 text-center text-sm text-muted-foreground">
             No upcoming earnings announced.
           </p>
         ) : (
@@ -75,7 +75,7 @@ function EarningsRow({ earnings: e }: { earnings: FinnhubEarningsItem }) {
     e.quarter && e.year ? `Q${e.quarter} ${e.year}` : null
 
   return (
-    <div className="flex items-center gap-4 px-6 py-3 flex-wrap">
+    <div className="flex items-center gap-4 px-5 py-3 flex-wrap">
       <div className="flex flex-col gap-0.5 min-w-[8rem] shrink-0">
         <span className="font-semibold text-sm tabular-nums">{dateLabel}</span>
         <div className="flex items-center gap-2 flex-wrap">

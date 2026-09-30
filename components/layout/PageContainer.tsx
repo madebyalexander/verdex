@@ -25,7 +25,8 @@ export function PageContainer({
   return (
     <div
       className={cn(
-        'mx-auto w-full px-4 py-6 sm:px-6 md:py-8 flex flex-col gap-8',
+        'mx-auto flex w-full flex-col gap-8 px-4 py-6 sm:px-6 md:py-10',
+        'motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-1 motion-safe:duration-300',
         width === 'default' && 'max-w-6xl',
         width === 'narrow' && 'max-w-3xl',
         width === 'prose' && 'max-w-2xl',

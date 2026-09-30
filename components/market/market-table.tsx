@@ -15,14 +15,14 @@ import { IoChevronForward as NavArrowRight } from 'react-icons/io5'
 //   md:     + 30d trend
 //   lg:     + 52-week range + P/E
 export const GRID =
-  'grid items-center gap-10 grid-cols-[1.2fr_1fr_auto] sm:grid-cols-[1.2fr_1fr_1fr_auto] md:grid-cols-[1.2fr_1.4fr_1fr_1fr_auto] lg:grid-cols-[1.2fr_1.4fr_1.6fr_1fr_1fr_0.7fr_auto]'
+  'grid items-center gap-4 sm:gap-6 lg:gap-8 grid-cols-[1.4fr_1fr_auto] sm:grid-cols-[1.4fr_1fr_1fr_auto] md:grid-cols-[1.4fr_1.2fr_1fr_1fr_auto] lg:grid-cols-[1.4fr_1.2fr_1.4fr_1fr_1fr_0.6fr_auto]'
 
 export function MarketTableHeader() {
   return (
     <div
       className={cn(
         GRID,
-        'px-4 pb-4 text-[11px] uppercase tracking-wide font-medium text-muted-foreground'
+        'px-5 pb-3 text-xs font-medium text-muted-foreground'
       )}
     >
       <span className="min-w-0">Stock</span>
@@ -42,16 +42,16 @@ export function StockRow({ stock }: { stock: MarketStock }) {
       href={`/stocks/${stock.symbol}`}
       className={cn(
         GRID,
-        'group px-4 py-3 transition-colors hover:bg-secondary/40 focus-visible:outline-none focus-visible:bg-secondary'
+        'group px-5 py-3.5 transition-colors hover:bg-white/[0.025] focus-visible:outline-none focus-visible:bg-white/[0.04]'
       )}
     >
       <div className="flex items-center gap-2.5 min-w-0">
         <StockLogo
           symbol={stock.symbol}
-          className="size-7 rounded-md text-[11px]"
+          className="size-9 rounded-xl text-xs ring-1 ring-inset ring-white/[0.06]"
         />
         <div className="flex flex-col min-w-0">
-          <span className="text-sm font-semibold tabular-nums">
+          <span className="text-sm font-semibold tabular-nums group-hover:text-primary transition-colors">
             {stock.symbol}
           </span>
           <span className="text-xs text-muted-foreground truncate">
@@ -109,7 +109,7 @@ export function StockRow({ stock }: { stock: MarketStock }) {
 
       <NavArrowRight
         aria-hidden
-        className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 shrink-0"
+        className="size-4 text-muted-foreground/60 transition-all group-hover:translate-x-0.5 group-hover:text-foreground shrink-0"
       />
     </Link>
   )
@@ -119,9 +119,9 @@ export function StockSkeletonRows({ count = 5 }: { count?: number }) {
   return (
     <ul className="divide-y divide-border border-t border-border">
       {Array.from({ length: count }).map((_, i) => (
-        <li key={i} className={cn(GRID, 'px-4 py-3')}>
+        <li key={i} className={cn(GRID, 'px-5 py-3.5')}>
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="size-7 rounded-md bg-muted animate-pulse shrink-0" />
+            <div className="size-9 rounded-xl bg-muted animate-pulse shrink-0" />
             <div className="flex flex-col gap-1.5">
               <div className="h-3.5 w-12 rounded bg-muted animate-pulse" />
               <div className="h-3 w-24 rounded bg-muted animate-pulse" />

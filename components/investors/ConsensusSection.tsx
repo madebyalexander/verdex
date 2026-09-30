@@ -51,13 +51,13 @@ export function ConsensusSection() {
       <CardContent className="px-0">
         {state === 'loading' && <ConsensusSkeleton />}
         {state === 'error' && (
-          <p className="px-6 py-8 text-center text-sm text-muted-foreground">
+          <p className="px-5 py-8 text-center text-sm text-muted-foreground">
             Couldn&apos;t build consensus from SEC filings right now. Try again
             shortly.
           </p>
         )}
         {state === 'ready' && data && data.stocks.length === 0 && (
-          <p className="px-6 py-8 text-center text-sm text-muted-foreground">
+          <p className="px-5 py-8 text-center text-sm text-muted-foreground">
             No overlapping positions across these investors&apos; top holdings.
           </p>
         )}
@@ -83,7 +83,7 @@ function ConsensusRow({
   maxFunds: number
 }) {
   return (
-    <div className="flex items-center gap-4 px-6 py-3">
+    <div className="flex items-center gap-4 px-5 py-3">
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{titleCase(stock.issuer)}</p>
         <div className="mt-1 flex items-center gap-2">
@@ -120,7 +120,7 @@ function ConsensusSkeleton() {
   return (
     <ul aria-hidden className="divide-y divide-border">
       {Array.from({ length: 6 }).map((_, i) => (
-        <li key={i} className="flex items-center gap-4 px-6 py-3">
+        <li key={i} className="flex items-center gap-4 px-5 py-3">
           <div className="min-w-0 flex-1">
             <div className="h-4 w-40 rounded bg-muted animate-pulse" />
             <div className="mt-2 h-1.5 w-24 rounded-full bg-muted animate-pulse" />

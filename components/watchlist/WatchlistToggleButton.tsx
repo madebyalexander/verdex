@@ -68,19 +68,20 @@ export function WatchlistToggleButton({
 
   return (
     <Button
-      variant={isIn ? 'outline' : 'default'}
-      size="sm"
+      variant="outline"
+      size="lg"
       onClick={toggle}
       disabled={pending}
       aria-pressed={isIn}
       aria-label={ariaLabel}
+      className={isIn ? 'text-foreground' : undefined}
     >
       {isIn ? (
-        <StarSolid aria-hidden className="size-3.5 text-primary" />
+        <StarSolid aria-hidden className="size-4 text-primary" />
       ) : (
-        <StarOutline aria-hidden className="size-3.5" />
+        <StarOutline aria-hidden className="size-4" />
       )}
-      <span>{isIn ? 'Watchlisted' : 'Watchlist'}</span>
+      <span>{isIn ? 'Watching' : 'Watch'}</span>
     </Button>
   )
 }

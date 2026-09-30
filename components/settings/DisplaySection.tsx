@@ -119,7 +119,7 @@ function PrefRadioGroup<T extends string>({
               onClick={() => onChange(o.value)}
               disabled={disabled}
               className={cn(
-                'inline-flex items-center h-8 px-3 rounded-md text-sm font-medium ring-1 ring-inset transition-colors',
+                'inline-flex items-center h-8 px-3.5 rounded-full text-sm font-medium ring-1 ring-inset transition-colors',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
                 'disabled:opacity-50 disabled:pointer-events-none',
                 active

@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 
 export default function AuthError({
   error,
@@ -38,8 +38,8 @@ export default function AuthError({
       </CardContent>
       <CardFooter className="flex gap-2">
         <Button onClick={reset}>Try again</Button>
-        <Link href="/login">
-          <Button variant="outline">Sign in</Button>
+        <Link href="/login" className={buttonVariants({ variant: 'outline' })}>
+          Sign in
         </Link>
       </CardFooter>
     </Card>

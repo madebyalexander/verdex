@@ -56,7 +56,7 @@ export function UxToggle({ initialMode }: { initialMode: Mode }) {
     <div
       role="group"
       aria-label="Display mode"
-      className="inline-flex items-center rounded-full bg-secondary p-0.5 ring-1 ring-inset ring-border"
+      className="inline-flex h-8 items-center rounded-full bg-white/[0.04] p-0.5 ring-1 ring-inset ring-white/[0.08]"
     >
       {(['simple', 'technical'] as Mode[]).map((m) => (
         <button
@@ -65,10 +65,10 @@ export function UxToggle({ initialMode }: { initialMode: Mode }) {
           onClick={() => change(m)}
           aria-pressed={mode === m}
           className={cn(
-            'h-6 rounded-full px-2.5 text-xs font-medium transition-colors',
+            'h-7 rounded-full px-3 text-xs font-medium transition-colors',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
             mode === m
-              ? 'bg-background text-foreground shadow-sm'
+              ? 'bg-white/10 text-foreground shadow-sm'
               : 'text-muted-foreground hover:text-foreground'
           )}
         >

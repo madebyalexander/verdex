@@ -1,17 +1,12 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
   getDailyOhlcv,
   AlphaVantageError,
   AlphaVantageRateLimitError,
 } from '@/lib/apis/alpha-vantage'
 import { PriceChart } from './PriceChart'
-import { IoTime as Clock } from 'react-icons/io5'
+import { IoTime as Clock, IoAnalytics as ChartIcon } from 'react-icons/io5'
 
 export async function PriceChartSection({ symbol }: { symbol: string }) {
   let bars
@@ -34,7 +29,7 @@ export async function PriceChartSection({ symbol }: { symbol: string }) {
 
   const last = bars[bars.length - 1]
   const first = bars[0]
-  const description = `${bars.length} daily bars · ${new Date(first.time).toLocaleDateString()} → ${new Date(last.time).toLocaleDateString()} · Alpha Vantage`
+  const description = `Daily closes · ${new Date(first.time).toLocaleDateString()} – ${new Date(last.time).toLocaleDateString()} · Source: Alpha Vantage`
 
   return <PriceChart bars={bars} description={description} />
 }
@@ -42,12 +37,13 @@ export async function PriceChartSection({ symbol }: { symbol: string }) {
 function ChartError({ message }: { message: string }) {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Price chart</CardTitle>
-      </CardHeader>
-      <CardContent className="text-sm py-12 rounded-md text-center text-muted-foreground bg-secondary">
-        {message}
-      </CardContent>
+      <EmptyState
+        icon={ChartIcon}
+        tone="muted"
+        title="Chart unavailable"
+        description={message}
+        className="py-16"
+      />
     </Card>
   )
 }
@@ -55,25 +51,13 @@ function ChartError({ message }: { message: string }) {
 function ChartRateLimited() {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Price chart</CardTitle>
-        <CardDescription>Alpha Vantage</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col items-center gap-3 py-12 text-center">
-          <span
-            aria-hidden
-            className="inline-flex items-center justify-center size-12 rounded-full bg-amber-500/10 text-amber-400"
-          >
-            <Clock className="size-6" />
-          </span>
-          <p className="text-sm font-medium">Daily quota reached</p>
-          <p className="text-sm max-w-xs text-muted-foreground">
-            Alpha Vantage&apos;s free tier allows 25 chart requests per day.
-            Chart and indicators will resume tomorrow.
-          </p>
-        </div>
-      </CardContent>
+      <EmptyState
+        icon={Clock}
+        tone="warning"
+        title="Daily chart quota reached"
+        description="Alpha Vantage's free tier allows 25 chart requests per day. The chart and indicators will be back tomorrow — quotes and the AI forecast still work."
+        className="py-16"
+      />
     </Card>
   )
 }

@@ -67,13 +67,13 @@ export function CreateAlertButton({
     <>
       {iconOnly ? (
         <Button
-          variant="ghost"
-          size="icon-sm"
+          variant="outline"
+          size="icon-lg"
           onClick={() => setOpen(true)}
           aria-label={triggerLabel}
           title={triggerLabel}
         >
-          <Bell aria-hidden className="size-4 text-muted-foreground" />
+          <Bell aria-hidden className="size-4" />
         </Button>
       ) : (
         <Button

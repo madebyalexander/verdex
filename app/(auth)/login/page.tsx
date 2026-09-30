@@ -17,9 +17,9 @@ export default async function LoginPage({
 }) {
   const { next } = await searchParams
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="w-full max-w-sm gap-6 py-7 shadow-2xl shadow-black/40">
       <CardHeader>
-        <CardTitle>Welcome back</CardTitle>
+        <CardTitle className="text-xl">Welcome back</CardTitle>
         <CardDescription>Sign in to continue to your dashboard.</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
@@ -36,7 +36,7 @@ export default async function LoginPage({
           No account?{' '}
           <Link
             href="/signup"
-            className="text-primary underline underline-offset-2"
+            className="font-medium text-primary hover:text-primary/80"
           >
             Create one
           </Link>

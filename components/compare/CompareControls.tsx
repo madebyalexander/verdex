@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { SymbolBadge } from '@/components/ui/symbol-badge'
+import { StockLogo } from '@/components/ui/stock-logo'
+import { FilterChip, ChipRow } from '@/components/ui/filter-chip'
 import { SymbolCombobox } from '@/components/search/SymbolCombobox'
 
 const SymbolRegex = /^[A-Z][A-Z0-9.-]{0,9}$/
@@ -96,6 +98,7 @@ export function CompareControls({
           />
         </div>
         <Button
+          size="lg"
           onClick={() => addSymbol(input)}
           disabled={!input.trim() || full || pending}
         >
@@ -109,18 +112,16 @@ export function CompareControls({
         </p>
       )}
 
-      <div className="flex flex-col gap-2 pt-3 border-t border-border">
-        <p className="text-xs text-muted-foreground">Popular comparisons</p>
-        <div className="flex flex-wrap gap-2">
+      <div className="flex flex-col gap-2.5 border-t border-border pt-4">
+        <p className="text-xs font-medium text-muted-foreground">Popular comparisons</p>
+        <ChipRow>
           {POPULAR_PAIRS.map((pair) => {
             const trimmed = pair.slice(0, max)
             const active = sameSet(trimmed, symbols)
             return (
-              <Button
+              <FilterChip
                 key={trimmed.join(',')}
-                type="button"
-                variant={active ? 'secondary' : 'outline'}
-                size="sm"
+                active={active}
                 onClick={() => {
                   setError(null)
                   setInput('')
@@ -128,13 +129,22 @@ export function CompareControls({
                 }}
                 disabled={pending || active}
                 aria-label={`Compare ${trimmed.join(', ')}`}
-                className="font-mono text-xs"
+                className="pl-1.5 disabled:opacity-100"
               >
+                <span aria-hidden className="flex -space-x-1.5">
+                  {trimmed.map((sym) => (
+                    <StockLogo
+                      key={sym}
+                      symbol={sym}
+                      className="size-5 rounded-full text-[9px] ring-2 ring-card"
+                    />
+                  ))}
+                </span>
                 {trimmed.join(' · ')}
-              </Button>
+              </FilterChip>
             )
           })}
-        </div>
+        </ChipRow>
       </div>
     </div>
   )

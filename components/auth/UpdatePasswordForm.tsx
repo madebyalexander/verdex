@@ -34,7 +34,7 @@ export function UpdatePasswordForm() {
         />
       </Field>
       {state.error && <Alert tone="danger">{state.error}</Alert>}
-      <Button type="submit" className="w-full" disabled={pending}>
+      <Button type="submit" size="lg" className="w-full" disabled={pending}>
         {pending ? 'Updating…' : 'Update password'}
       </Button>
     </form>

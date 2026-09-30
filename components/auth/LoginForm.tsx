@@ -47,7 +47,7 @@ export function LoginForm({ next }: { next?: string }) {
         />
       </Field>
       {state.error && <Alert tone="danger">{state.error}</Alert>}
-      <Button type="submit" className="w-full" disabled={pending}>
+      <Button type="submit" size="lg" className="w-full" disabled={pending}>
         {pending ? 'Signing in…' : 'Sign in'}
       </Button>
     </form>

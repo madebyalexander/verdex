@@ -1,5 +1,20 @@
 import { cn } from '@/lib/utils'
+import { usd } from '@/lib/format'
 import { IoArrowDown as ArrowDown, IoArrowUp as ArrowUp } from 'react-icons/io5'
+
+/**
+ * Single source of the semantic up/down palette (emerald = up, rose = down).
+ * Import these instead of inlining emerald/rose classes elsewhere.
+ */
+export function directionText(value: number | null | undefined): string {
+  if (value == null || value === 0) return 'text-muted-foreground'
+  return value > 0 ? 'text-emerald-400' : 'text-rose-400'
+}
+
+export function directionBg(value: number | null | undefined): string {
+  if (value == null) return 'bg-muted-foreground/40'
+  return value >= 0 ? 'bg-emerald-400' : 'bg-rose-400'
+}
 
 export function ChangeBadge({
   pct,
@@ -31,6 +46,58 @@ export function ChangeBadge({
         {isUp ? '+' : ''}
         {pct.toFixed(2)}%
       </span>
+    </span>
+  )
+}
+
+/**
+ * Inline, pill-less price delta — "+$2.31 (+1.24%)". Used next to large
+ * price figures where a pill would compete with the number itself.
+ */
+export function ChangeText({
+  pct,
+  abs,
+  label,
+  showIcon = true,
+  className,
+}: {
+  pct: number | null | undefined
+  /** Absolute change in USD. Omitted → percent only. */
+  abs?: number | null
+  /** Trailing muted context, e.g. "Today" or "Past 3 months". */
+  label?: React.ReactNode
+  showIcon?: boolean
+  className?: string
+}) {
+  if (pct == null || !Number.isFinite(pct)) {
+    return <span className={cn('text-muted-foreground', className)}>—</span>
+  }
+  const isUp = pct >= 0
+  const Icon = isUp ? ArrowUp : ArrowDown
+  const sign = isUp ? '+' : '−'
+  return (
+    <span
+      className={cn(
+        'inline-flex flex-wrap items-center gap-x-1.5 font-medium tabular-nums',
+        className
+      )}
+    >
+      <span className={cn('inline-flex items-center gap-1', directionText(pct))}>
+        {showIcon && <Icon aria-hidden className="size-[0.8em]" />}
+        {abs != null && Number.isFinite(abs) && (
+          <span>
+            {sign}
+            {usd(Math.abs(abs))}
+          </span>
+        )}
+        <span>
+          {abs != null && Number.isFinite(abs) ? '(' : ''}
+          {sign}
+          {Math.abs(pct).toFixed(2)}%
+          {abs != null && Number.isFinite(abs) ? ')' : ''}
+        </span>
+      </span>
+      {label && <span className="font-normal text-muted-foreground">{label}</span>}
     </span>
   )
 }

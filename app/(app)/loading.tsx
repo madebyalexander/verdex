@@ -1,16 +1,19 @@
 import { Skeleton } from '@/components/ui/skeleton'
+import { PageContainer } from '@/components/layout/PageContainer'
 
 export default function AppLoading() {
   return (
-    <main className="p-6 max-w-4xl mx-auto flex flex-col gap-4">
-      <Skeleton className="h-7 w-48" />
-      <Skeleton className="h-4 w-72" />
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mt-2">
-        <Skeleton className="h-24 rounded-md" />
-        <Skeleton className="h-24 rounded-md" />
-        <Skeleton className="h-24 rounded-md" />
+    <PageContainer>
+      <div className="flex flex-col gap-2" aria-hidden>
+        <Skeleton className="h-8 w-56 rounded-lg" />
+        <Skeleton className="h-4 w-80 max-w-full rounded" />
       </div>
-      <Skeleton className="h-64 rounded-md" />
-    </main>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-hidden>
+        <Skeleton className="h-28 rounded-[20px]" />
+        <Skeleton className="h-28 rounded-[20px]" />
+        <Skeleton className="h-28 rounded-[20px]" />
+      </div>
+      <Skeleton className="h-72 rounded-[20px]" aria-hidden />
+    </PageContainer>
   )
 }

@@ -29,7 +29,7 @@ function BucketSkeleton({ title, rows }: { title: string; rows: number }) {
           {Array.from({ length: rows }).map((_, i) => (
             <li
               key={i}
-              className="flex items-center justify-between gap-3 px-6 py-3"
+              className="flex items-center justify-between gap-3 px-5 py-3"
             >
               <div className="flex items-center gap-3">
                 <div className="h-4 w-12 rounded bg-muted animate-pulse" />

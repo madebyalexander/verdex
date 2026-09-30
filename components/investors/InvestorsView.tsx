@@ -169,7 +169,7 @@ export function InvestorsView() {
         ))}
 
         <DropdownMenu>
-          <DropdownMenuTrigger className="ml-auto inline-flex h-7 items-center gap-1.5 rounded-full border border-border bg-secondary px-2.5 text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
+          <DropdownMenuTrigger className="ml-auto inline-flex h-7 items-center gap-1.5 rounded-full bg-white/[0.03] px-3 text-xs font-medium text-muted-foreground ring-1 ring-inset ring-white/[0.07] transition-colors hover:bg-white/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60">
             Sort: {SORT_LABEL[sortBy]}
             <ChevronDown aria-hidden className="size-3.5" />
           </DropdownMenuTrigger>
@@ -287,7 +287,7 @@ function initials(person: string): string {
     .toUpperCase()
 }
 
-function InvestorAvatar({
+export function InvestorAvatar({
   investor,
   className,
 }: {
@@ -476,7 +476,7 @@ function MovesList({ moves }: { moves: HoldingMove[] }) {
       {moves.map((m) => (
         <li
           key={m.cusip}
-          className="flex items-center gap-3 px-4 sm:px-6 py-3"
+          className="flex items-center gap-3 px-4 sm:px-5 py-3"
         >
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">

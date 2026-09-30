@@ -18,6 +18,8 @@ import {
 import { getDailyOhlcv, type OhlcvBar } from '@/lib/apis/alpha-vantage'
 import { summarizeIndicators } from '@/lib/indicators'
 import { CompareChart, type CompareSeries } from './CompareChart'
+import { StockLogo } from '@/components/ui/stock-logo'
+import { directionText } from '@/components/ui/change-badge'
 import { cn } from '@/lib/utils'
 import { usd, compactUsd } from '@/lib/format'
 import { IoArrowDown as ArrowDown, IoArrowUp as ArrowUp } from 'react-icons/io5'
@@ -110,12 +112,13 @@ export async function CompareView({ symbols }: { symbols: string[] }) {
         </CardContent>
       </Card>
 
-      <Card variant="list">
+      <Card variant="list" className="gap-2">
         <CardHeader>
           <CardTitle>Side-by-side</CardTitle>
+          <CardDescription>Key metrics for each ticker</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="relative overflow-x-auto -mx-1 px-1 [mask-image:linear-gradient(to_right,transparent_0,black_0.5rem,black_calc(100%-0.5rem),transparent_100%)] sm:[mask-image:none]">
+        <CardContent className="px-0">
+          <div className="relative overflow-x-auto [mask-image:linear-gradient(to_right,black_calc(100%-1.5rem),transparent)] sm:[mask-image:none]">
             <table className="w-full text-sm min-w-[520px]">
               <thead>
                 <tr className="border-b border-border">
@@ -124,10 +127,17 @@ export async function CompareView({ symbols }: { symbols: string[] }) {
                     <Th key={e.symbol} align="left">
                       <Link
                         href={`/stocks/${e.symbol}`}
-                        className="underline underline-offset-2 hover:opacity-80"
-                        style={{ color: e.color }}
+                        className="group inline-flex items-center gap-2 normal-case text-foreground"
                       >
-                        {e.symbol}
+                        <span
+                          aria-hidden
+                          className="size-2 rounded-full"
+                          style={{ background: e.color }}
+                        />
+                        <StockLogo symbol={e.symbol} className="size-6 rounded-lg text-[10px]" />
+                        <span className="text-sm font-semibold transition-colors group-hover:text-primary">
+                          {e.symbol}
+                        </span>
                       </Link>
                     </Th>
                   ))}
@@ -161,7 +171,7 @@ export async function CompareView({ symbols }: { symbols: string[] }) {
                       <span
                         className={cn(
                           'inline-flex items-center gap-0.5',
-                          up ? 'text-emerald-400' : 'text-rose-400'
+                          directionText(e.quote.dp)
                         )}
                       >
                         <Icon aria-hidden className="size-3" />
@@ -266,7 +276,7 @@ function Th({
   return (
     <th
       className={cn(
-        'pt-2 pb-4 px-3 font-medium text-xs uppercase tracking-wide text-muted-foreground',
+        'px-3 pt-1 pb-3 text-xs font-medium text-muted-foreground first:pl-5',
         align === 'right' ? 'text-right' : 'text-left'
       )}
     >
@@ -289,14 +299,14 @@ function Row({
   className?: string
 }) {
   return (
-    <tr className={cn('border-b border-border', className)}>
-      <td className="py-2 px-3 text-xs uppercase tracking-wide text-muted-foreground">
+    <tr className={cn('border-b border-border last:border-b-0', className)}>
+      <td className="py-3 pr-3 pl-5 text-sm text-muted-foreground">
         {label}
       </td>
       {entries.map((e) => (
         <td
           key={e.symbol}
-          className={cn('py-2 px-3 text-left', numeric && 'tabular-nums')}
+          className={cn('px-3 py-3 text-left', numeric && 'font-medium tabular-nums')}
         >
           {render(e)}
         </td>

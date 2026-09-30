@@ -2,14 +2,15 @@ import { Suspense } from 'react'
 import Link from 'next/link'
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
-import { ChangeBadge } from '@/components/ui/change-badge'
+import { buttonVariants } from '@/components/ui/button'
+import { ChangeText, directionText } from '@/components/ui/change-badge'
+import { EmptyState } from '@/components/ui/empty-state'
+import { StockLogo } from '@/components/ui/stock-logo'
 import { listPositions } from '@/lib/portfolio'
 import { getQuote, type FinnhubQuote } from '@/lib/apis/finnhub'
 import { AddPositionForm } from '@/components/portfolio/AddPositionForm'
@@ -18,24 +19,48 @@ import {
   AllocationPie,
   type AllocationSlice,
 } from '@/components/portfolio/AllocationPie'
+import { PortfolioSkeleton } from '@/components/portfolio/PortfolioSkeleton'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { CardStack } from '@/components/layout/CardStack'
 import { cn } from '@/lib/utils'
-
 import { usd } from '@/lib/format'
-import { IoBriefcase as Suitcase, IoDownload as Download } from 'react-icons/io5'
+import {
+  IoPieChart as PortfolioIcon,
+  IoDownload as Download,
+  IoAdd as Plus,
+  IoWallet as Wallet,
+} from 'react-icons/io5'
 
 export default async function PortfolioPage() {
   return (
     <PageContainer>
-      <PageHeader icon={Suitcase} title="Portfolio" />
-      <CardStack>
-        <Suspense fallback={<PortfolioSkeleton />}>
-          <PortfolioContent />
-        </Suspense>
+      <PageHeader
+        icon={PortfolioIcon}
+        title="Portfolio"
+        description="Live value and profit & loss across the positions you track."
+        action={
+          <>
+            <a
+              href="/api/export/portfolio"
+              download
+              className={buttonVariants({ variant: 'outline', size: 'lg' })}
+            >
+              <Download aria-hidden />
+              <span className="hidden sm:inline">Export CSV</span>
+            </a>
+            <a href="#add-position" className={buttonVariants({ size: 'lg' })}>
+              <Plus aria-hidden />
+              Add position
+            </a>
+          </>
+        }
+      />
+      <Suspense fallback={<PortfolioSkeleton />}>
+        <PortfolioContent />
+      </Suspense>
+      <section id="add-position" className="scroll-mt-20">
         <AddPositionForm />
-      </CardStack>
+      </section>
     </PageContainer>
   )
 }
@@ -45,9 +70,19 @@ async function PortfolioContent() {
 
   if (positions.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        Add positions below to track cost basis and live P/L.
-      </p>
+      <Card>
+        <EmptyState
+          icon={Wallet}
+          title="Start tracking your portfolio"
+          description="Add the positions you hold — Verdex values them with live quotes and shows your profit & loss and allocation."
+          action={
+            <a href="#add-position" className={buttonVariants({ size: 'lg' })}>
+              <Plus aria-hidden />
+              Add your first position
+            </a>
+          }
+        />
+      </Card>
     )
   }
 
@@ -81,192 +116,186 @@ async function PortfolioContent() {
   }
   const totalPL = totalValue - totalCost
   const totalPLPct = totalCost > 0 ? (totalPL / totalCost) * 100 : 0
-  const todaysPLPct = totalValue > 0 ? (todaysPL / totalValue) * 100 : 0
+  const prevValue = totalValue - todaysPL
+  const todaysPLPct = prevValue > 0 ? (todaysPL / prevValue) * 100 : 0
 
-  const allocation: AllocationSlice[] = enriched
-    .filter((p) => p.quote)
-    .map((p) => ({
-      symbol: p.symbol,
-      value: Number(p.quantity) * p.quote!.c,
-    }))
+  const rows = enriched.map((p) => {
+    const qty = Number(p.quantity)
+    const cb = Number(p.cost_basis)
+    const cost = qty * cb
+    const value = p.quote ? qty * p.quote.c : null
+    const pl = value != null ? value - cost : null
+    const plPct = cost > 0 && pl != null ? (pl / cost) * 100 : null
+    const weight = value != null && totalValue > 0 ? (value / totalValue) * 100 : null
+    return { ...p, qty, cb, cost, value, pl, plPct, weight }
+  })
+  rows.sort((a, b) => (b.value ?? b.cost) - (a.value ?? a.cost))
+
+  const best = rows
+    .filter((r) => r.plPct != null)
+    .sort((a, b) => (b.plPct ?? 0) - (a.plPct ?? 0))[0]
+
+  const allocation: AllocationSlice[] = rows
+    .filter((r) => r.value != null)
+    .map((r) => ({ symbol: r.symbol, value: r.value! }))
 
   return (
     <>
-      <p className="text-sm text-muted-foreground">
-        {positions.length} {positions.length === 1 ? 'position' : 'positions'}
-      </p>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardContent className="flex h-full flex-col justify-between gap-8">
+            <div className="flex flex-col gap-1.5">
+              <p className="text-sm text-muted-foreground">Total value</p>
+              <p className="text-4xl font-semibold tracking-tight tabular-nums sm:text-5xl">
+                {usd(totalValue)}
+              </p>
+              <ChangeText
+                pct={totalPLPct}
+                abs={totalPL}
+                label="All time"
+                className="text-base"
+              />
+            </div>
+            <dl className="grid grid-cols-2 gap-x-6 gap-y-5 border-t border-border pt-5 sm:grid-cols-4">
+              <Kpi label="Today">
+                <ChangeText pct={todaysPLPct} abs={todaysPL} className="text-sm" />
+              </Kpi>
+              <Kpi label="Total cost">{usd(totalCost)}</Kpi>
+              <Kpi label="Positions">{positions.length}</Kpi>
+              <Kpi label="Best performer">
+                {best ? (
+                  <span className="flex items-baseline gap-1.5">
+                    <span>{best.symbol}</span>
+                    <span className={cn('text-xs', directionText(best.plPct))}>
+                      {(best.plPct ?? 0) >= 0 ? '+' : '−'}
+                      {Math.abs(best.plPct ?? 0).toFixed(1)}%
+                    </span>
+                  </span>
+                ) : (
+                  '—'
+                )}
+              </Kpi>
+            </dl>
+          </CardContent>
+        </Card>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard label="Total cost" value={usd(totalCost)} />
-        <KpiCard label="Total value" value={usd(totalValue)} />
-        <KpiCard
-          label="Total P/L"
-          value={`${totalPL >= 0 ? '+' : ''}${usd(totalPL)}`}
-          chip={<ChangeBadge pct={totalPLPct} />}
-        />
-        <KpiCard
-          label="Today's P/L"
-          value={`${todaysPL >= 0 ? '+' : ''}${usd(todaysPL)}`}
-          chip={totalValue > 0 ? <ChangeBadge pct={todaysPLPct} /> : null}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card>
           <CardHeader>
             <CardTitle>Allocation</CardTitle>
-            <CardDescription>Share of total value by ticker</CardDescription>
+            <CardDescription>Share of market value</CardDescription>
           </CardHeader>
           <CardContent>
             {allocation.length > 0 ? (
               <AllocationPie data={allocation} />
             ) : (
-              <p className="text-sm py-6 text-center text-muted-foreground">
+              <p className="py-6 text-center text-sm text-muted-foreground">
                 No live quotes — allocation unavailable.
               </p>
             )}
           </CardContent>
         </Card>
-
-        <Card variant="list" className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Positions</CardTitle>
-            <CardDescription>
-              Cost basis vs live market value
-            </CardDescription>
-            <CardAction>
-              <a
-                href="/api/export/portfolio"
-                download
-                className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-sm text-muted-foreground border border-border hover:bg-secondary hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-              >
-                <Download aria-hidden className="size-3.5" />
-                <span>Export CSV</span>
-              </a>
-            </CardAction>
-          </CardHeader>
-          <CardContent>
-            <div className="relative overflow-x-auto -mx-1 px-1 [mask-image:linear-gradient(to_right,transparent_0,black_0.5rem,black_calc(100%-0.5rem),transparent_100%)] sm:[mask-image:none]">
-              <table className="w-full text-sm min-w-[640px]">
-                <thead>
-                  <tr className="border-b border-border">
-                    <Th>Symbol</Th>
-                    <Th align="right">Qty</Th>
-                    <Th align="right">Cost</Th>
-                    <Th align="right">Price</Th>
-                    <Th align="right">Value</Th>
-                    <Th align="right">P/L</Th>
-                    <Th align="right"></Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {enriched.map((p, i) => {
-                    const qty = Number(p.quantity)
-                    const cb = Number(p.cost_basis)
-                    const cost = qty * cb
-                    const value = p.quote ? qty * p.quote.c : null
-                    const pl = value != null ? value - cost : null
-                    const plPct =
-                      cost > 0 && pl != null ? (pl / cost) * 100 : null
-                    const isLast = i === enriched.length - 1
-                    return (
-                      <tr
-                        key={p.id}
-                        className={cn(!isLast && 'border-b border-border')}
-                      >
-                        <td className="py-2 px-2">
-                          <Link
-                            href={`/stocks/${p.symbol}`}
-                            className="font-semibold text-primary hover:underline"
-                          >
-                            {p.symbol}
-                          </Link>
-                        </td>
-                        <td className="py-2 px-2 text-right tabular-nums">
-                          {qty.toLocaleString(undefined, {
-                            maximumFractionDigits: 4,
-                          })}
-                        </td>
-                        <td className="py-2 px-2 text-right tabular-nums">
-                          {usd(cb)}
-                        </td>
-                        <td className="py-2 px-2 text-right tabular-nums">
-                          {p.quote ? usd(p.quote.c) : '—'}
-                        </td>
-                        <td className="py-2 px-2 text-right tabular-nums">
-                          {value != null ? usd(value) : '—'}
-                        </td>
-                        <td
-                          className={cn(
-                            'py-2 px-2 text-right tabular-nums',
-                            pl != null && pl >= 0 && 'text-emerald-400',
-                            pl != null && pl < 0 && 'text-rose-400'
-                          )}
-                        >
-                          {pl != null
-                            ? `${pl >= 0 ? '+' : ''}${usd(pl)}`
-                            : '—'}
-                          {plPct != null && (
-                            <span className="text-xs ml-1 text-muted-foreground">
-                              ({plPct >= 0 ? '+' : ''}
-                              {plPct.toFixed(2)}%)
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-2 px-2 text-right">
-                          <DeletePositionButton id={p.id} />
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
       </div>
+
+      <Card variant="list" className="gap-2">
+        <CardHeader>
+          <CardTitle>Positions</CardTitle>
+          <CardDescription>Cost basis vs live market value</CardDescription>
+        </CardHeader>
+        <div className="relative overflow-x-auto [mask-image:linear-gradient(to_right,black_calc(100%-1.5rem),transparent)] sm:[mask-image:none]">
+          <table className="w-full min-w-[680px] text-sm">
+            <thead>
+              <tr className="border-b border-border text-xs text-muted-foreground">
+                <Th>Holding</Th>
+                <Th align="right">Price</Th>
+                <Th align="right">Avg cost</Th>
+                <Th align="right">Market value</Th>
+                <Th align="right">Total return</Th>
+                <Th align="right">
+                  <span className="sr-only">Actions</span>
+                </Th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {rows.map((p) => (
+                <tr key={p.id} className="transition-colors hover:bg-white/[0.02]">
+                  <td className="py-3 pr-3 pl-5">
+                    <Link
+                      href={`/stocks/${p.symbol}`}
+                      className="group flex items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+                    >
+                      <StockLogo
+                        symbol={p.symbol}
+                        className="size-9 rounded-xl text-xs ring-1 ring-inset ring-white/[0.06]"
+                      />
+                      <span className="flex flex-col">
+                        <span className="font-semibold tabular-nums transition-colors group-hover:text-primary">
+                          {p.symbol}
+                        </span>
+                        <span className="text-xs text-muted-foreground tabular-nums">
+                          {p.qty.toLocaleString(undefined, { maximumFractionDigits: 4 })}{' '}
+                          {p.qty === 1 ? 'share' : 'shares'}
+                        </span>
+                      </span>
+                    </Link>
+                  </td>
+                  <td className="px-3 py-3 text-right tabular-nums">
+                    {p.quote ? (
+                      <span className="flex flex-col items-end">
+                        <span>{usd(p.quote.c)}</span>
+                        <ChangeText pct={p.quote.dp} showIcon={false} className="text-xs" />
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-3 text-right tabular-nums text-muted-foreground">
+                    {usd(p.cb)}
+                  </td>
+                  <td className="px-3 py-3 text-right tabular-nums">
+                    {p.value != null ? (
+                      <span className="flex flex-col items-end">
+                        <span className="font-medium">{usd(p.value)}</span>
+                        {p.weight != null && (
+                          <span className="text-xs text-muted-foreground">
+                            {p.weight.toFixed(1)}% of portfolio
+                          </span>
+                        )}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-3 text-right">
+                    {p.pl != null ? (
+                      <ChangeText
+                        pct={p.plPct}
+                        abs={p.pl}
+                        showIcon={false}
+                        className="justify-end text-sm"
+                      />
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="py-3 pr-4 pl-2 text-right">
+                    <DeletePositionButton id={p.id} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
     </>
   )
 }
 
-function PortfolioSkeleton() {
+function Kpi({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-4">
-      <Skeleton className="h-4 w-24" />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-20 rounded-xl" />
-        ))}
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Skeleton className="h-56 rounded-xl" />
-        <Skeleton className="h-56 rounded-xl lg:col-span-2" />
-      </div>
+    <div className="flex min-w-0 flex-col gap-1">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="truncate text-[15px] font-semibold tabular-nums">{children}</dd>
     </div>
-  )
-}
-
-function KpiCard({
-  label,
-  value,
-  chip,
-}: {
-  label: string
-  value: string
-  chip?: React.ReactNode
-}) {
-  return (
-    <Card>
-      <CardContent className="flex flex-col gap-1">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-          {label}
-        </p>
-        <p className="text-2xl font-semibold tabular-nums tracking-tight break-words">
-          {value}
-        </p>
-        {chip}
-      </CardContent>
-    </Card>
   )
 }
 
@@ -280,7 +309,7 @@ function Th({
   return (
     <th
       className={cn(
-        'pt-2 pb-4 px-2 font-medium text-xs uppercase tracking-wide text-muted-foreground',
+        'px-3 pt-1 pb-3 font-medium first:pl-5 last:pr-4',
         align === 'right' ? 'text-right' : 'text-left'
       )}
     >

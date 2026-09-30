@@ -143,7 +143,7 @@ export function WatchlistsTabs({
 
   return (
     <>
-      <div className="flex items-center justify-between gap-2 px-6 pb-3 border-b border-border">
+      <div className="flex items-center justify-between gap-2 px-5 pb-3 border-b border-border">
         {/* List switcher */}
         <DropdownMenu>
           <DropdownMenuTrigger className="flex min-w-0 items-center gap-1.5 -ml-2 rounded-md px-2 py-1 transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">

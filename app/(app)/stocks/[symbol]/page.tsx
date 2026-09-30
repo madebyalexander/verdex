@@ -35,6 +35,7 @@ import { IndicatorsSkeleton } from '@/components/stock/IndicatorsSkeleton'
 import { EarningsSection } from '@/components/stock/EarningsSection'
 import { EarningsSkeleton } from '@/components/stock/EarningsSkeleton'
 import { StockHero } from '@/components/stock/StockHero'
+import { AIForecastStrip } from '@/components/stock/AIForecastStrip'
 import { QuickStatsStrip } from '@/components/stock/QuickStatsStrip'
 import { QuickStatsStripSkeleton } from '@/components/stock/QuickStatsStripSkeleton'
 import { checkInWatchlist } from '@/lib/watchlist'
@@ -44,7 +45,16 @@ import { PageContainer } from '@/components/layout/PageContainer'
 import { CardStack } from '@/components/layout/CardStack'
 
 import { compactUsd, compactNum } from '@/lib/format'
-import { IoSparkles as Sparks } from 'react-icons/io5'
+import { cn } from '@/lib/utils'
+import {
+  IoSparkles as Sparks,
+  IoBulb as Bulb,
+  IoOpenOutline as ExternalLink,
+} from 'react-icons/io5'
+
+// Underline tabs: indicator sits on the list's bottom border.
+const TAB_CLASS =
+  'h-full flex-none px-3 text-[15px] group-data-horizontal/tabs:after:bottom-[-1px]'
 
 function resolveLogo(profile: FinnhubProfile): string | null {
   if (profile.logo && profile.logo.length > 0) return profile.logo
@@ -88,7 +98,7 @@ export default async function StockDetailPage({
   const sharesOutCount = (profile.shareOutstanding ?? 0) * 1_000_000
 
   return (
-    <PageContainer>
+    <PageContainer className="gap-6">
       <TriggeredAlerts symbol={symbol} currentPrice={quote.c} />
 
       <StockHero
@@ -97,47 +107,63 @@ export default async function StockDetailPage({
         quote={quote}
         logo={logo}
         isInWatchlist={isInWatchlist}
-        quickStats={
-          <Suspense fallback={<QuickStatsStripSkeleton />}>
-            <QuickStatsStrip
-              symbol={symbol}
-              quote={quote}
-              marketCapUsd={marketCapUsd}
-            />
-          </Suspense>
-        }
       />
 
-      <Suspense fallback={<PriceChartSkeleton />}>
-        <PriceChartSection symbol={symbol} />
+      <Suspense fallback={null}>
+        <AIForecastStrip symbol={symbol} currentPrice={quote.c} />
       </Suspense>
 
-      <Tabs defaultValue="forecast">
-          <TabsList className="self-start">
-            <TabsTrigger
-              value="forecast"
-              className="data-active:text-primary"
-            >
-              <Sparks aria-hidden className="size-3.5" />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="min-w-0 lg:col-span-2">
+          <Suspense fallback={<PriceChartSkeleton />}>
+            <PriceChartSection symbol={symbol} />
+          </Suspense>
+        </div>
+        <Suspense fallback={<QuickStatsStripSkeleton />}>
+          <QuickStatsStrip
+            symbol={symbol}
+            quote={quote}
+            marketCapUsd={marketCapUsd}
+          />
+        </Suspense>
+      </div>
+
+      <section id="ai-forecast" aria-label="Research" className="scroll-mt-20 pt-2">
+        <Tabs defaultValue="forecast" className="gap-6">
+          <TabsList
+            variant="line"
+            className="h-11 w-full justify-start gap-1 rounded-none border-b border-border p-0"
+          >
+            <TabsTrigger value="forecast" className={TAB_CLASS}>
+              <Sparks aria-hidden className="size-3.5 text-primary" />
               <span>AI Forecast</span>
             </TabsTrigger>
-            <TabsTrigger value="analysis" className="simple:hidden">
+            <TabsTrigger value="analysis" className={cn(TAB_CLASS, 'simple:hidden')}>
               Analysis
             </TabsTrigger>
-            <TabsTrigger value="news">News</TabsTrigger>
-            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="news" className={TAB_CLASS}>
+              News
+            </TabsTrigger>
+            <TabsTrigger value="profile" className={TAB_CLASS}>
+              Company
+            </TabsTrigger>
           </TabsList>
 
-          <p className="technical:hidden -mt-1 text-xs text-muted-foreground">
-            Switch to <span className="font-medium text-foreground">Technical</span>{' '}
-            mode (top right) for indicators, analyst ratings, insider activity &
-            earnings.
+          <p className="technical:hidden -mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+            <Bulb aria-hidden className="size-3.5 shrink-0 text-primary" />
+            <span>
+              Switch to{' '}
+              <span className="font-medium text-foreground">Technical</span> mode
+              (top right) for candlesticks, indicators, analyst ratings, insider
+              activity and earnings.
+            </span>
           </p>
 
           <TabsContent value="forecast">
             <Suspense fallback={<ForecastSkeleton />}>
               <ForecastSection
                 symbol={symbol}
+                currentPrice={quote.c}
                 preferredHorizon={prefs.default_forecast_horizon}
                 riskProfile={prefs.risk_profile}
               />
@@ -145,11 +171,11 @@ export default async function StockDetailPage({
           </TabsContent>
 
           <TabsContent value="analysis" className="simple:hidden">
-            <CardStack>
+            <CardStack className="gap-4">
               <Suspense fallback={<IndicatorsSkeleton />}>
                 <IndicatorsSection symbol={symbol} />
               </Suspense>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <Suspense fallback={<AnalystSkeleton />}>
                   <AnalystSection symbol={symbol} />
                 </Suspense>
@@ -172,57 +198,64 @@ export default async function StockDetailPage({
           <TabsContent value="profile">
             <Card>
               <CardHeader>
-                <CardTitle>Company</CardTitle>
-                <CardDescription>Profile data from Finnhub</CardDescription>
+                <CardTitle>About {profile.name}</CardTitle>
+                <CardDescription>Company profile · Finnhub</CardDescription>
               </CardHeader>
-              <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-3 text-sm">
-                {!!profile.marketCapitalization && (
-                  <Detail
-                    label="Market cap"
-                    value={compactUsd(marketCapUsd)}
-                  />
-                )}
-                {!!profile.shareOutstanding && (
-                  <Detail
-                    label="Shares outstanding"
-                    value={compactNum(sharesOutCount)}
-                  />
-                )}
-                {profile.country && (
-                  <Detail label="Country" value={profile.country} />
-                )}
-                {profile.currency && (
-                  <Detail label="Currency" value={profile.currency} />
-                )}
-                {profile.ipo && <Detail label="IPO" value={profile.ipo} />}
-                {profile.weburl && (
-                  <Detail
-                    label="Website"
-                    value={
-                      <a
-                        href={profile.weburl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-primary underline underline-offset-2"
-                      >
-                        {(() => {
-                          try {
-                            return new URL(profile.weburl).hostname.replace(
-                              /^www\./,
-                              ''
-                            )
-                          } catch {
-                            return profile.weburl
-                          }
-                        })()}
-                      </a>
-                    }
-                  />
-                )}
+              <CardContent>
+                <dl className="grid grid-cols-2 gap-x-6 gap-y-5 text-sm md:grid-cols-3">
+                  {profile.finnhubIndustry && (
+                    <Detail label="Industry" value={profile.finnhubIndustry} />
+                  )}
+                  {!!profile.marketCapitalization && (
+                    <Detail
+                      label="Market cap"
+                      value={compactUsd(marketCapUsd)}
+                    />
+                  )}
+                  {!!profile.shareOutstanding && (
+                    <Detail
+                      label="Shares outstanding"
+                      value={compactNum(sharesOutCount)}
+                    />
+                  )}
+                  {profile.country && (
+                    <Detail label="Country" value={profile.country} />
+                  )}
+                  {profile.currency && (
+                    <Detail label="Currency" value={profile.currency} />
+                  )}
+                  {profile.ipo && <Detail label="IPO date" value={profile.ipo} />}
+                  {profile.weburl && (
+                    <Detail
+                      label="Website"
+                      value={
+                        <a
+                          href={profile.weburl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-primary hover:text-primary/80"
+                        >
+                          {(() => {
+                            try {
+                              return new URL(profile.weburl).hostname.replace(
+                                /^www\./,
+                                ''
+                              )
+                            } catch {
+                              return profile.weburl
+                            }
+                          })()}
+                          <ExternalLink aria-hidden className="size-3" />
+                        </a>
+                      }
+                    />
+                  )}
+                </dl>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
+      </section>
     </PageContainer>
   )
 }
@@ -235,11 +268,9 @@ function Detail({
   value: React.ReactNode
 }) {
   return (
-    <div className="flex flex-col gap-0.5">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
-      <p className="font-medium">{value}</p>
+    <div className="flex min-w-0 flex-col gap-1">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="truncate font-medium">{value}</dd>
     </div>
   )
 }

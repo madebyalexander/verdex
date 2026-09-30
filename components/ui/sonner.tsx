@@ -1,14 +1,12 @@
 "use client"
 
-import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 import { IoCheckmarkCircle as CheckCircle, IoInformationCircle as InfoCircle, IoWarning as WarningTriangle, IoRefreshCircle as RefreshCircle } from 'react-icons/io5'
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
-
+  // Dark mode only — never follow the OS preference.
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme="dark"
       className="toaster group"
       icons={{
         success: <CheckCircle className="size-4" />,

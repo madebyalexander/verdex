@@ -5,15 +5,22 @@ import {
   createChart,
   LineSeries,
   ColorType,
+  CrosshairMode,
+  LineStyle,
   type IChartApi,
 } from 'lightweight-charts'
+import { StockLogo } from '@/components/ui/stock-logo'
+import { directionText } from '@/components/ui/change-badge'
 import { readCssColor } from '@/lib/css-color'
+import { cn } from '@/lib/utils'
 
 export type CompareSeries = {
   symbol: string
   color: string
   data: { time: string; value: number }[]
 }
+
+const pctLabel = (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`
 
 export function CompareChart({ series }: { series: CompareSeries[] }) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -25,21 +32,22 @@ export function CompareChart({ series }: { series: CompareSeries[] }) {
     const muted = readCssColor('--muted-foreground', '#a1a1aa')
 
     const chart: IChartApi = createChart(containerRef.current, {
-      width: containerRef.current.clientWidth,
-      height: 420,
+      autoSize: true,
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
         textColor: muted,
         fontFamily: 'inherit',
       },
       grid: {
-        vertLines: { color: 'rgba(255,255,255,0.05)' },
-        horzLines: { color: 'rgba(255,255,255,0.05)' },
+        vertLines: { visible: false },
+        horzLines: { color: 'rgba(255,255,255,0.04)' },
       },
       timeScale: {
         timeVisible: false,
         secondsVisible: false,
-        borderColor: 'rgba(255,255,255,0.1)',
+        borderVisible: false,
+        fixLeftEdge: true,
+        fixRightEdge: true,
         tickMarkFormatter: (time: number | string) => {
           const d = typeof time === 'string' ? new Date(time) : new Date(time)
           return d.toLocaleDateString(undefined, {
@@ -48,62 +56,67 @@ export function CompareChart({ series }: { series: CompareSeries[] }) {
           })
         },
       },
-      rightPriceScale: {
-        borderColor: 'rgba(255,255,255,0.1)',
-      },
+      rightPriceScale: { borderVisible: false },
       crosshair: {
-        mode: 1,
-        vertLine: { color: fg, width: 1, style: 3 },
-        horzLine: { color: fg, width: 1, style: 3 },
+        mode: CrosshairMode.Magnet,
+        vertLine: { color: fg, width: 1, style: LineStyle.Dotted },
+        horzLine: { color: fg, width: 1, style: LineStyle.Dotted },
       },
-      localization: {
-        priceFormatter: (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`,
-      },
+      handleScroll: { vertTouchDrag: false },
+      localization: { priceFormatter: pctLabel },
     })
 
-    for (const s of series) {
+    series.forEach((s, i) => {
       const line = chart.addSeries(LineSeries, {
         color: s.color,
         lineWidth: 2,
-        priceFormat: {
-          type: 'custom',
-          formatter: (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`,
-          minMove: 0.01,
-        },
+        priceLineVisible: false,
+        priceFormat: { type: 'custom', formatter: pctLabel, minMove: 0.01 },
       })
       line.setData(s.data)
-    }
+      // Zero line once, on the first series.
+      if (i === 0) {
+        line.createPriceLine({
+          price: 0,
+          color: 'rgba(255,255,255,0.2)',
+          lineWidth: 1,
+          lineStyle: LineStyle.Dashed,
+          axisLabelVisible: false,
+        })
+      }
+    })
 
     chart.timeScale().fitContent()
-
-    const onResize = () => {
-      if (containerRef.current) {
-        chart.applyOptions({ width: containerRef.current.clientWidth })
-      }
-    }
-    window.addEventListener('resize', onResize)
-
-    return () => {
-      window.removeEventListener('resize', onResize)
-      chart.remove()
-    }
+    return () => chart.remove()
   }, [series])
 
   return (
-    <div className="flex flex-col gap-3">
-      <div ref={containerRef} className="w-full" style={{ height: 420 }} />
-      <div className="flex flex-wrap gap-3">
-        {series.map((s) => (
-          <div key={s.symbol} className="flex items-center gap-1.5 text-sm">
-            <span
-              aria-hidden
-              className="inline-block w-3 h-3 rounded-sm"
-              style={{ background: s.color }}
-            />
-            <span className="font-medium">{s.symbol}</span>
-          </div>
-        ))}
-      </div>
+    <div className="flex flex-col gap-4">
+      <ul className="flex flex-wrap gap-2">
+        {series.map((s) => {
+          const last = s.data[s.data.length - 1]?.value ?? null
+          return (
+            <li
+              key={s.symbol}
+              className="flex items-center gap-2 rounded-full bg-white/[0.03] py-1 pr-3 pl-1 text-sm ring-1 ring-inset ring-white/[0.07]"
+            >
+              <StockLogo symbol={s.symbol} className="size-6 rounded-full text-[10px]" />
+              <span
+                aria-hidden
+                className="size-2 rounded-full"
+                style={{ background: s.color }}
+              />
+              <span className="font-semibold tabular-nums">{s.symbol}</span>
+              {last != null && (
+                <span className={cn('text-xs font-medium tabular-nums', directionText(last))}>
+                  {pctLabel(last)}
+                </span>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+      <div ref={containerRef} className="h-[320px] w-full sm:h-[420px]" />
     </div>
   )
 }

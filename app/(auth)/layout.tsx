@@ -1,5 +1,47 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import {
+  IoSparkles as Sparks,
+  IoAnalytics as Chart,
+  IoLayers as Layers,
+} from 'react-icons/io5'
+
+const FEATURES = [
+  {
+    icon: Sparks,
+    title: 'Forecasts you can audit',
+    body: '1-week, 1-month and 3-month ranges with the weighted factors behind every call.',
+  },
+  {
+    icon: Chart,
+    title: 'All the research in one place',
+    body: 'Live quotes, candlesticks, indicators, analyst ratings, insider trades and news sentiment.',
+  },
+  {
+    icon: Layers,
+    title: 'Built around your portfolio',
+    body: 'Watchlists, price alerts, live P/L and side-by-side comparisons.',
+  },
+]
+
+function Brand() {
+  return (
+    <Link href="/" className="flex items-center gap-2.5">
+      <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary/40 to-primary/5 ring-1 ring-inset ring-primary/40">
+        <Image
+          src="/verdex-mark-white.svg"
+          alt=""
+          width={20}
+          height={20}
+          priority
+          unoptimized
+          className="size-5"
+        />
+      </span>
+      <span className="text-lg font-semibold tracking-tight">Verdex</span>
+    </Link>
+  )
+}
 
 export default function AuthLayout({
   children,
@@ -7,33 +49,105 @@ export default function AuthLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex-1 flex flex-col">
-      <header className="flex items-center justify-center px-6 py-5">
-        <Link href="/" className="flex items-center gap-2.5">
-          <Image
-            src="/verdex-mark-white.svg"
-            alt=""
-            width={32}
-            height={32}
-            priority
-            unoptimized
-            className="h-8 w-8"
+    <div className="flex min-h-svh flex-1">
+      <aside className="relative hidden w-[44%] max-w-[620px] flex-col justify-between overflow-hidden border-r border-white/[0.06] bg-[#070709] p-12 lg:flex">
+        {/* Decorative only: brand glow, faint grid and an abstract trend line. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_60%_at_20%_10%,color-mix(in_oklch,var(--primary)_28%,transparent)_0%,transparent_70%)]"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-[0.35] [background-image:linear-gradient(rgb(255_255_255/0.04)_1px,transparent_1px),linear-gradient(90deg,rgb(255_255_255/0.04)_1px,transparent_1px)] [background-size:48px_48px] [mask-image:radial-gradient(70%_60%_at_50%_40%,black,transparent)]"
+        />
+        <svg
+          aria-hidden
+          viewBox="0 0 600 200"
+          preserveAspectRatio="none"
+          className="pointer-events-none absolute inset-x-0 bottom-28 h-40 w-full"
+        >
+          <defs>
+            <linearGradient id="auth-line" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0%" stopColor="#ad46ff" stopOpacity="0" />
+              <stop offset="60%" stopColor="#ad46ff" stopOpacity="0.9" />
+              <stop offset="100%" stopColor="#ad46ff" stopOpacity="0.4" />
+            </linearGradient>
+            <linearGradient id="auth-fill" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="#ad46ff" stopOpacity="0.18" />
+              <stop offset="100%" stopColor="#ad46ff" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M0 170 C 60 160, 90 120, 150 130 S 250 90, 300 100 S 390 40, 450 60 S 540 20, 600 10 L 600 200 L 0 200 Z"
+            fill="url(#auth-fill)"
           />
-          <span className="text-base font-semibold tracking-tight">
-            Verdex
-          </span>
-        </Link>
-      </header>
-      <main className="flex-1 flex items-center justify-center px-6 py-6">
-        {children}
-      </main>
-      <footer className="px-6 py-5 text-xs text-center text-muted-foreground">
-        <p className="max-w-xl mx-auto">
-          Verdex provides informational analysis powered by artificial
-          intelligence. This is NOT financial advice. Predictions are
-          probabilistic and may be wrong. Always do your own research.
+          <path
+            d="M0 170 C 60 160, 90 120, 150 130 S 250 90, 300 100 S 390 40, 450 60 S 540 20, 600 10"
+            fill="none"
+            stroke="url(#auth-line)"
+            strokeWidth="2.5"
+          />
+        </svg>
+
+        <div className="relative">
+          <Brand />
+        </div>
+
+        <div className="relative flex flex-col gap-8">
+          <div className="flex flex-col gap-4">
+            <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 text-xs font-medium text-primary ring-1 ring-inset ring-primary/30">
+              <Sparks aria-hidden className="size-3" />
+              AI-powered stock research
+            </span>
+            <h1 className="text-4xl font-semibold leading-[1.1] tracking-tight xl:text-5xl">
+              Invest with clarity,
+              <br />
+              <span className="bg-gradient-to-r from-primary to-chart-1 bg-clip-text text-transparent">
+                not guesswork.
+              </span>
+            </h1>
+            <p className="max-w-md text-base leading-relaxed text-muted-foreground">
+              Verdex turns market data into transparent AI forecasts — so you
+              see why a stock might move, not just a number.
+            </p>
+          </div>
+          <ul className="flex flex-col gap-5">
+            {FEATURES.map(({ icon: Icon, title, body }) => (
+              <li key={title} className="flex gap-3.5">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.05] text-primary ring-1 ring-inset ring-white/[0.08]">
+                  <Icon aria-hidden className="size-4" />
+                </span>
+                <span className="flex flex-col gap-0.5">
+                  <span className="text-sm font-semibold">{title}</span>
+                  <span className="text-sm text-muted-foreground">{body}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <p className="relative text-xs text-muted-foreground/70">
+          Research tool only — Verdex never places trades.
         </p>
-      </footer>
+      </aside>
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex items-center justify-center px-6 py-6 lg:hidden">
+          <Brand />
+        </header>
+        <main className="flex flex-1 items-center justify-center px-6 py-8">
+          {children}
+        </main>
+        <footer className="px-6 py-6 text-center text-xs text-muted-foreground">
+          <p className="mx-auto max-w-xl leading-relaxed">
+            Verdex provides informational analysis powered by artificial
+            intelligence. This is NOT financial advice. Predictions are
+            probabilistic and may be wrong. Past performance does not indicate
+            future results. Always do your own research and consult a licensed
+            financial advisor before investing.
+          </p>
+        </footer>
+      </div>
     </div>
   )
 }

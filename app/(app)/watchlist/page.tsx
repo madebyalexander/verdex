@@ -1,9 +1,11 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { ChangeBadge } from '@/components/ui/change-badge'
+import { buttonVariants } from '@/components/ui/button'
+import { ChangeText } from '@/components/ui/change-badge'
+import { EmptyState } from '@/components/ui/empty-state'
+import { StockLogo } from '@/components/ui/stock-logo'
 import {
   listAllWatchlists,
   listWatchlistItems,
@@ -19,23 +21,9 @@ import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { SectionHeader } from '@/components/layout/SectionHeader'
 import { CardStack } from '@/components/layout/CardStack'
-import { cn } from '@/lib/utils'
 
 import { usd } from '@/lib/format'
-import { IoStar as Star } from 'react-icons/io5'
-
-function resolveLogo(profile: FinnhubProfile): string | null {
-  if (profile.logo && profile.logo.length > 0) return profile.logo
-  if (profile.weburl) {
-    try {
-      const host = new URL(profile.weburl).hostname.replace(/^www\./, '')
-      return `https://logo.clearbit.com/${host}`
-    } catch {
-      // fall through
-    }
-  }
-  return null
-}
+import { IoStar as Star, IoChevronForward as ChevronRight } from 'react-icons/io5'
 
 type EnrichedItem = WatchlistItem & {
   quote?: FinnhubQuote
@@ -54,7 +42,7 @@ export default async function WatchlistPage({
       <PageHeader
         icon={Star}
         title="Watchlist"
-        description="Your tracked stocks and price alerts"
+        description="The stocks you follow and the price alerts you've set"
       />
       <CardStack>
         <Suspense
@@ -66,7 +54,7 @@ export default async function WatchlistPage({
 
         <SectionHeader
           title="Price alerts"
-          description="Fire when the price crosses your threshold and you visit the symbol"
+          description="Checked whenever you open the stock — fires once the price crosses your target"
         />
         <Suspense fallback={<AlertsSkeleton />}>
           <AlertsSection />
@@ -81,26 +69,26 @@ async function WatchlistContent({ requestedId }: { requestedId?: string }) {
 
   if (watchlists.length === 0) {
     return (
-      <CardStack>
-        <Card>
-        <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-          <span
-            aria-hidden
-            className="inline-flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary"
-          >
-            <Star className="size-6" />
-          </span>
-          <h2 className="text-lg font-medium">Nothing here yet</h2>
-          <p className="text-sm text-muted-foreground max-w-xs">
-            Open a stock detail page and tap the <strong>Watchlist</strong>{' '}
-            star to start tracking it.
-          </p>
-          <Link href="/stocks/AAPL">
-            <Button>Try AAPL</Button>
-          </Link>
-        </CardContent>
+      <Card>
+        <EmptyState
+          icon={Star}
+          title="Build your first watchlist"
+          description="Follow the stocks you care about and see their moves at a glance. Tap Watch on any stock page to add it here."
+          action={
+            <>
+              <Link href="/market" className={buttonVariants({ size: 'lg' })}>
+                Browse markets
+              </Link>
+              <Link
+                href="/stocks/AAPL"
+                className={buttonVariants({ variant: 'outline', size: 'lg' })}
+              >
+                Start with AAPL
+              </Link>
+            </>
+          }
+        />
       </Card>
-      </CardStack>
     )
   }
 
@@ -123,13 +111,21 @@ async function WatchlistContent({ requestedId }: { requestedId?: string }) {
   )
 
   return (
-    <Card variant="list" className="gap-0">
+    <Card variant="list" className="gap-0 pt-4">
       <WatchlistsTabs watchlists={watchlists} activeId={activeWl.id} />
       {enriched.length === 0 ? (
-        <p className="text-sm text-center py-10 px-6 text-muted-foreground">
-          “{activeWl.name}” is empty. Add stocks from any detail page using the
-          watchlist star.
-        </p>
+        <EmptyState
+          icon={Star}
+          tone="muted"
+          title={`“${activeWl.name}” is empty`}
+          description="Open any stock and tap Watch to add it to this list."
+          action={
+            <Link href="/market" className={buttonVariants({ variant: 'outline' })}>
+              Browse markets
+            </Link>
+          }
+          className="py-10"
+        />
       ) : (
         <ul className="divide-y divide-border">
           {enriched.map((item) => (
@@ -148,9 +144,13 @@ function WatchlistRow({ item }: { item: EnrichedItem }) {
     return (
       <Link
         href={`/stocks/${item.symbol}`}
-        className="flex items-center justify-between px-6 py-3 transition-colors hover:bg-secondary/50 focus-visible:outline-none focus-visible:bg-secondary"
+        className="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-white/[0.025] focus-visible:outline-none focus-visible:bg-white/[0.04]"
       >
-        <span className="font-semibold tabular-nums">{item.symbol}</span>
+        <StockLogo
+          symbol={item.symbol}
+          className="size-10 rounded-xl text-xs ring-1 ring-inset ring-white/[0.06]"
+        />
+        <span className="flex-1 font-semibold tabular-nums">{item.symbol}</span>
         <Badge
           variant="outline"
           className="border-transparent bg-amber-500/10 text-amber-400 ring-1 ring-inset ring-amber-500/20"
@@ -161,42 +161,36 @@ function WatchlistRow({ item }: { item: EnrichedItem }) {
     )
   }
 
-  const logo = resolveLogo(item.profile)
-
   return (
     <Link
       href={`/stocks/${item.symbol}`}
-      className={cn(
-        'flex items-center gap-4 px-6 py-3 transition-colors',
-        'hover:bg-secondary/50 focus-visible:outline-none focus-visible:bg-secondary'
-      )}
+      className="group flex items-center gap-3.5 px-5 py-3.5 transition-colors hover:bg-white/[0.025] focus-visible:outline-none focus-visible:bg-white/[0.04]"
     >
-      {logo ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={logo}
-          alt=""
-          width={36}
-          height={36}
-          loading="lazy"
-          decoding="async"
-          className="rounded-md object-contain bg-secondary shrink-0"
-        />
-      ) : (
-        <div className="rounded-md flex items-center justify-center text-xs font-semibold shrink-0 w-9 h-9 bg-secondary text-muted-foreground">
-          {item.symbol.slice(0, 2)}
-        </div>
-      )}
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold tabular-nums">{item.symbol}</p>
-        <p className="text-xs truncate text-muted-foreground">
+      <StockLogo
+        symbol={item.symbol}
+        className="size-10 rounded-xl text-xs ring-1 ring-inset ring-white/[0.06]"
+      />
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold tabular-nums transition-colors group-hover:text-primary">
+          {item.symbol}
+        </p>
+        <p className="truncate text-xs text-muted-foreground">
           {item.profile.name}
         </p>
       </div>
-      <div className="flex shrink-0 items-center gap-3">
+      <div className="flex shrink-0 flex-col items-end gap-0.5">
         <span className="font-semibold tabular-nums">{usd(item.quote.c)}</span>
-        <ChangeBadge pct={item.quote.dp} size="xs" />
+        <ChangeText
+          pct={item.quote.dp}
+          abs={item.quote.d}
+          showIcon={false}
+          className="text-xs"
+        />
       </div>
+      <ChevronRight
+        aria-hidden
+        className="hidden size-4 shrink-0 text-muted-foreground/60 transition-all group-hover:translate-x-0.5 group-hover:text-foreground sm:block"
+      />
     </Link>
   )
 }

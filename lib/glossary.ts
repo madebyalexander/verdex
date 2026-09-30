@@ -63,6 +63,26 @@ export const GLOSSARY = {
     definition:
       'The lowest and highest price over the past year; the marker shows where the current price falls within it.',
   },
+  eps: {
+    title: 'EPS (TTM)',
+    definition:
+      'Earnings per share over the trailing twelve months — net profit divided by shares outstanding.',
+  },
+  dividendYield: {
+    title: 'Dividend yield',
+    definition:
+      'Annual dividends per share as a percentage of the current share price.',
+  },
+  beta: {
+    title: 'Beta',
+    definition:
+      'How much the stock has historically moved relative to the overall market. Above 1 means more volatile than the market; below 1, less.',
+  },
+  avgVolume: {
+    title: 'Average volume',
+    definition:
+      'The average number of shares traded per day over the last 10 sessions.',
+  },
 } as const satisfies Record<string, GlossaryEntry>
 
 export type GlossaryKey = keyof typeof GLOSSARY

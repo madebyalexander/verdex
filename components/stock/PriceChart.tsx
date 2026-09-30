@@ -7,23 +7,22 @@ import {
   HistogramSeries,
   AreaSeries,
   ColorType,
+  CrosshairMode,
+  LineStyle,
   type IChartApi,
+  type IPriceLine,
   type ISeriesApi,
   type CandlestickData,
   type HistogramData,
   type AreaData,
   type Time,
 } from 'lightweight-charts'
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
+import { ChangeText } from '@/components/ui/change-badge'
+import { Segmented } from '@/components/ui/filter-chip'
 import type { OhlcvBar } from '@/lib/apis/alpha-vantage'
 import { cn } from '@/lib/utils'
+import { usd } from '@/lib/format'
 import { readCssColor } from '@/lib/css-color'
 import { useUxMode } from '@/components/ux/use-ux-mode'
 
@@ -32,28 +31,27 @@ const DOWN_COLOR = '#FB7185' // rose-400
 const UP_FILL = 'rgba(52, 211, 153, 0.35)'
 const DOWN_FILL = 'rgba(251, 113, 133, 0.35)'
 
-const CHART_HEIGHT = 380
 const TOOLTIP_WIDTH = 168
 const TOOLTIP_HEIGHT = 132
 
 const RANGES = [
-  { label: '1M', days: 22 },
-  { label: '3M', days: 66 },
-  { label: '6M', days: 132 },
-  { label: '1Y', days: 252 },
-  { label: 'MAX', days: Number.POSITIVE_INFINITY },
+  { label: '1M', days: 22, text: 'Past month' },
+  { label: '3M', days: 66, text: 'Past 3 months' },
+  { label: '6M', days: 132, text: 'Past 6 months' },
+  { label: '1Y', days: 252, text: 'Past year' },
+  { label: 'MAX', days: Number.POSITIVE_INFINITY, text: 'All available' },
 ] as const
 
 type RangeLabel = (typeof RANGES)[number]['label']
+const RANGE_LABELS = RANGES.map((r) => r.label)
+
+type Hover = { date: string; price: number }
 
 type Tooltip = {
   left: number
   top: number
-  date: string
-  price: number
   up: boolean
-  /** OHLC + volume — present only in technical (candlestick) mode. */
-  ohlc: { open: number; high: number; low: number; volume: number } | null
+  ohlc: { open: number; high: number; low: number; close: number; volume: number }
 }
 
 const volumeFormat = new Intl.NumberFormat(undefined, {
@@ -76,6 +74,11 @@ function formatDate(time: Time): string {
   )
 }
 
+function withAlpha(hex: string, alpha: number): string {
+  const n = parseInt(hex.slice(1), 16)
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`
+}
+
 export function PriceChart({
   bars,
   description,
@@ -88,8 +91,10 @@ export function PriceChart({
   const candleRef = useRef<ISeriesApi<'Candlestick'> | null>(null)
   const volumeRef = useRef<ISeriesApi<'Histogram'> | null>(null)
   const areaRef = useRef<ISeriesApi<'Area'> | null>(null)
+  const baselineRef = useRef<IPriceLine | null>(null)
   const mode = useUxMode()
   const [range, setRange] = useState<RangeLabel>('3M')
+  const [hover, setHover] = useState<Hover | null>(null)
   const [tooltip, setTooltip] = useState<Tooltip | null>(null)
 
   const visibleBars = useMemo(() => {
@@ -98,17 +103,26 @@ export function PriceChart({
     return bars.slice(-cfg.days)
   }, [bars, range])
 
-  // Create the chart + series once. Range changes only update data (effect below).
+  const baseClose = visibleBars[0]?.close ?? null
+  const lastClose = visibleBars[visibleBars.length - 1]?.close ?? null
+  const shown = hover?.price ?? lastClose
+  const abs = baseClose != null && shown != null ? shown - baseClose : null
+  const pct = abs != null && baseClose ? (abs / baseClose) * 100 : null
+  const rangeUp = (lastClose ?? 0) >= (baseClose ?? 0)
+  const rangeText = RANGES.find((r) => r.label === range)?.text ?? ''
+
+  // Create the chart + series once per display mode. Range changes only
+  // update data (effect below).
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
+    const simple = mode === 'simple'
 
     const fg = readCssColor('--foreground', '#fafafa')
     const muted = readCssColor('--muted-foreground', '#a1a1aa')
 
     const chart: IChartApi = createChart(container, {
       autoSize: true,
-      height: CHART_HEIGHT,
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
         textColor: muted,
@@ -116,7 +130,7 @@ export function PriceChart({
       },
       grid: {
         vertLines: { visible: false },
-        horzLines: { color: 'rgba(255,255,255,0.04)' },
+        horzLines: { color: simple ? 'transparent' : 'rgba(255,255,255,0.04)' },
       },
       timeScale: {
         timeVisible: false,
@@ -138,16 +152,30 @@ export function PriceChart({
         },
       },
       rightPriceScale: {
+        // Simple mode reads the price from the header instead of an axis.
+        visible: !simple,
         borderVisible: false,
-        // Reserve bottom space for the volume histogram in technical mode;
-        // the simple area chart has no volume, so keep it tight.
-        scaleMargins: { top: 0.05, bottom: mode === 'simple' ? 0.08 : 0.25 },
+        // Reserve bottom space for the volume histogram in technical mode.
+        scaleMargins: { top: 0.08, bottom: simple ? 0.04 : 0.25 },
       },
       crosshair: {
-        mode: 1,
-        vertLine: { color: fg, width: 1, style: 3 },
-        horzLine: { color: fg, width: 1, style: 3 },
+        mode: CrosshairMode.Magnet,
+        vertLine: {
+          color: simple ? 'rgba(255,255,255,0.35)' : fg,
+          width: 1,
+          style: simple ? LineStyle.Solid : LineStyle.Dotted,
+          labelVisible: !simple,
+        },
+        horzLine: {
+          color: fg,
+          width: 1,
+          style: LineStyle.Dotted,
+          visible: !simple,
+          labelVisible: !simple,
+        },
       },
+      // Let vertical swipes scroll the page on touch devices.
+      handleScroll: { vertTouchDrag: false },
       // Don't let horizontal axis drag stretch time; price axis still scales.
       handleScale: { axisPressedMouseMove: { time: false } },
     })
@@ -155,51 +183,44 @@ export function PriceChart({
 
     const place = (px: number, py: number) => {
       const w = container.clientWidth
+      const h = container.clientHeight
       let left = px + 16
       if (left + TOOLTIP_WIDTH > w) left = px - TOOLTIP_WIDTH - 16
       if (left < 0) left = 8
       let top = py + 16
-      if (top + TOOLTIP_HEIGHT > CHART_HEIGHT) top = py - TOOLTIP_HEIGHT - 16
+      if (top + TOOLTIP_HEIGHT > h) top = py - TOOLTIP_HEIGHT - 16
       if (top < 0) top = 8
       return { left, top }
     }
 
-    if (mode === 'simple') {
+    const clear = () => {
+      setHover(null)
+      setTooltip(null)
+    }
+
+    if (simple) {
       // Beginner-friendly: a clean area line of the close, no candles/volume.
-      const accent = readCssColor('--primary', '#ad46ff')
       const area = chart.addSeries(AreaSeries, {
-        lineColor: accent,
-        topColor: 'rgba(173, 70, 255, 0.25)',
-        bottomColor: 'rgba(173, 70, 255, 0)',
         lineWidth: 2,
         priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerRadius: 5,
+        crosshairMarkerBorderColor: '#0a0a0c',
+        crosshairMarkerBorderWidth: 2,
       })
       areaRef.current = area
 
       chart.subscribeCrosshairMove((param) => {
-        if (
-          !param.point ||
-          param.point.x < 0 ||
-          param.point.y < 0 ||
-          param.time === undefined
-        ) {
-          setTooltip(null)
+        if (!param.point || param.point.x < 0 || param.time === undefined) {
+          clear()
           return
         }
         const d = param.seriesData.get(area) as AreaData<Time> | undefined
         if (!d) {
-          setTooltip(null)
+          clear()
           return
         }
-        const { left, top } = place(param.point.x, param.point.y)
-        setTooltip({
-          left,
-          top,
-          date: formatDate(d.time),
-          price: d.value,
-          up: true,
-          ohlc: null,
-        })
+        setHover({ date: formatDate(d.time), price: d.value })
       })
     } else {
       const candleSeries = chart.addSeries(CandlestickSeries, {
@@ -228,30 +249,30 @@ export function PriceChart({
           param.point.y < 0 ||
           param.time === undefined
         ) {
-          setTooltip(null)
+          clear()
           return
         }
         const candle = param.seriesData.get(candleSeries) as
           | CandlestickData<Time>
           | undefined
         if (!candle) {
-          setTooltip(null)
+          clear()
           return
         }
         const vol = param.seriesData.get(volumeSeries) as
           | HistogramData<Time>
           | undefined
         const { left, top } = place(param.point.x, param.point.y)
+        setHover({ date: formatDate(candle.time), price: candle.close })
         setTooltip({
           left,
           top,
-          date: formatDate(candle.time),
-          price: candle.close,
           up: candle.close >= candle.open,
           ohlc: {
             open: candle.open,
             high: candle.high,
             low: candle.low,
+            close: candle.close,
             volume: vol?.value ?? 0,
           },
         })
@@ -264,6 +285,7 @@ export function PriceChart({
       candleRef.current = null
       volumeRef.current = null
       areaRef.current = null
+      baselineRef.current = null
     }
   }, [mode])
 
@@ -271,10 +293,24 @@ export function PriceChart({
   useEffect(() => {
     if (mode === 'simple') {
       const area = areaRef.current
-      if (!area) return
-      area.setData(
-        visibleBars.map((b) => ({ time: b.time, value: b.close }))
-      )
+      if (!area || visibleBars.length === 0) return
+      // Line takes the semantic colour of the selected period's performance.
+      const color = rangeUp ? UP_COLOR : DOWN_COLOR
+      area.applyOptions({
+        lineColor: color,
+        topColor: withAlpha(color, 0.22),
+        bottomColor: withAlpha(color, 0),
+      })
+      area.setData(visibleBars.map((b) => ({ time: b.time, value: b.close })))
+      // Dashed reference at the period's opening close.
+      if (baselineRef.current) area.removePriceLine(baselineRef.current)
+      baselineRef.current = area.createPriceLine({
+        price: visibleBars[0].close,
+        color: 'rgba(255,255,255,0.22)',
+        lineWidth: 1,
+        lineStyle: LineStyle.Dashed,
+        axisLabelVisible: false,
+      })
     } else {
       const candle = candleRef.current
       const volume = volumeRef.current
@@ -296,88 +332,73 @@ export function PriceChart({
         }))
       )
     }
-    setTooltip(null)
     chartRef.current?.timeScale().fitContent()
-  }, [visibleBars, mode])
+  }, [visibleBars, mode, rangeUp])
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Price chart</CardTitle>
-        <CardDescription>{description}</CardDescription>
-        <CardAction className="self-center">
-          <div
-            className="flex items-center gap-1"
-            role="tablist"
-            aria-label="Price chart range"
-          >
-            {RANGES.map((r) => {
-              const isActive = r.label === range
-              const disabled =
-                bars.length < r.days && r.days !== Number.POSITIVE_INFINITY
-              return (
-                <button
-                  key={r.label}
-                  role="tab"
-                  aria-selected={isActive}
-                  disabled={disabled}
-                  onClick={() => setRange(r.label)}
-                  className={cn(
-                    'h-7 px-2.5 rounded-md text-xs font-medium tabular-nums transition-colors',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
-                    isActive
-                      ? 'bg-primary/15 text-primary ring-1 ring-inset ring-primary/30'
-                      : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
-                    disabled && 'opacity-40 cursor-not-allowed hover:bg-transparent'
-                  )}
-                >
-                  {r.label}
-                </button>
-              )
-            })}
+    <Card className="gap-4 pb-4">
+      <div className="flex flex-wrap items-start justify-between gap-3 px-5">
+        <div className="flex min-h-12 min-w-0 flex-col justify-center gap-0.5">
+          <p className="text-xs font-medium text-muted-foreground tabular-nums">
+            {hover ? hover.date : rangeText}
+          </p>
+          <div className="flex flex-wrap items-baseline gap-x-2">
+            {hover && (
+              <span className="text-lg font-semibold tracking-tight tabular-nums">
+                {usd(hover.price)}
+              </span>
+            )}
+            <ChangeText
+              pct={pct}
+              abs={abs}
+              className={hover ? 'text-sm' : 'text-lg font-semibold'}
+            />
           </div>
-        </CardAction>
-      </CardHeader>
-      <CardContent>
-        <div className="relative w-full" style={{ height: CHART_HEIGHT }}>
-          <div ref={containerRef} className="absolute inset-0" />
-          {tooltip && (
-            <div
-              className="pointer-events-none absolute z-10 w-[168px] rounded-md border bg-popover/95 px-2.5 py-2 text-xs shadow-md backdrop-blur"
-              style={{ left: tooltip.left, top: tooltip.top }}
-            >
-              <div className="mb-1.5 font-medium text-foreground">
-                {tooltip.date}
-              </div>
-              {tooltip.ohlc ? (
-                <dl className="grid grid-cols-2 gap-x-3 gap-y-0.5 tabular-nums">
-                  <TooltipRow label="O" value={tooltip.ohlc.open.toFixed(2)} />
-                  <TooltipRow label="H" value={tooltip.ohlc.high.toFixed(2)} />
-                  <TooltipRow label="L" value={tooltip.ohlc.low.toFixed(2)} />
-                  <TooltipRow
-                    label="C"
-                    value={tooltip.price.toFixed(2)}
-                    valueClassName={tooltip.up ? 'text-emerald-400' : 'text-rose-400'}
-                  />
-                  <div className="col-span-2 flex items-center justify-between">
-                    <dt className="text-muted-foreground">Vol</dt>
-                    <dd className="font-medium text-foreground">
-                      {volumeFormat.format(tooltip.ohlc.volume)}
-                    </dd>
-                  </div>
-                </dl>
-              ) : (
-                <div className="flex items-center justify-between tabular-nums">
-                  <dt className="text-muted-foreground">Price</dt>
-                  <dd className="font-medium text-foreground">
-                    ${tooltip.price.toFixed(2)}
-                  </dd>
-                </div>
-              )}
-            </div>
-          )}
         </div>
-      </CardContent>
+        <Segmented
+          value={range}
+          options={RANGE_LABELS}
+          onChange={(r) => {
+            setRange(r)
+            setHover(null)
+            setTooltip(null)
+          }}
+          ariaLabel="Price chart range"
+          isDisabled={(label) => {
+            const cfg = RANGES.find((r) => r.label === label)
+            return !!cfg && cfg.days !== Number.POSITIVE_INFINITY && bars.length < cfg.days
+          }}
+        />
+      </div>
+
+      <div className="relative h-[280px] w-full px-2 sm:h-[360px]">
+        <div ref={containerRef} className="absolute inset-0 mx-2" />
+        {tooltip && (
+          <div
+            className="pointer-events-none absolute z-10 w-[168px] rounded-xl bg-popover/95 px-3 py-2.5 text-xs shadow-lg ring-1 ring-white/10 backdrop-blur"
+            style={{ left: tooltip.left, top: tooltip.top }}
+          >
+            <dl className="grid grid-cols-2 gap-x-3 gap-y-0.5 tabular-nums">
+              <TooltipRow label="O" value={tooltip.ohlc.open.toFixed(2)} />
+              <TooltipRow label="H" value={tooltip.ohlc.high.toFixed(2)} />
+              <TooltipRow label="L" value={tooltip.ohlc.low.toFixed(2)} />
+              <TooltipRow
+                label="C"
+                value={tooltip.ohlc.close.toFixed(2)}
+                valueClassName={tooltip.up ? 'text-emerald-400' : 'text-rose-400'}
+              />
+              <div className="col-span-2 flex items-center justify-between">
+                <dt className="text-muted-foreground">Vol</dt>
+                <dd className="font-medium text-foreground">
+                  {volumeFormat.format(tooltip.ohlc.volume)}
+                </dd>
+              </div>
+            </dl>
+          </div>
+        )}
+      </div>
+
+      <p className="px-5 text-[11px] text-muted-foreground/80">{description}</p>
     </Card>
   )
 }
