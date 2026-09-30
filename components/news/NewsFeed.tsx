@@ -1,15 +1,10 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { SymbolBadge } from '@/components/ui/symbol-badge'
 import { FilterChip } from '@/components/ui/filter-chip'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import type { FinnhubNewsArticle } from '@/lib/apis/finnhub'
 import type { Sentiment } from '@/lib/news-sentiment'
 import { cn } from '@/lib/utils'
@@ -17,7 +12,6 @@ import {
   IoArrowUp as ArrowUp,
   IoArrowDown as ArrowDown,
   IoRemove as Dot,
-  IoChevronDown as ChevronDown,
   IoStar as Star,
   IoFlame as Flame,
 } from 'react-icons/io5'
@@ -170,121 +164,139 @@ export function NewsFeed({
         ? { text: 'Leans bearish', cls: 'text-rose-400' }
         : { text: 'Mixed', cls: 'text-muted-foreground' }
 
+  const topTickers = tickers.slice(0, 10)
+  const tickerCount = (t: string) => articles.filter((a) => a.symbols.includes(t)).length
+
   return (
-    <div className="flex flex-col gap-8">
-      {/* Market mood */}
-      <Card className="py-0">
-        <CardContent className="flex flex-col gap-3 py-5">
-          <div className="flex items-baseline justify-between gap-3">
-            <span className="text-sm font-medium">Market mood · last 7 days</span>
-            <span className={cn('text-sm font-semibold', mood.cls)}>
-              {mood.text}
-            </span>
-          </div>
-
-          <div className="flex h-2 w-full gap-0.5 overflow-hidden rounded-full bg-white/[0.05]">
-            {(['positive', 'negative', 'neutral'] as Sentiment[]).map((s) =>
-              counts[s] > 0 ? (
-                <div
-                  key={s}
-                  className={SENTIMENT_META[s].bar}
-                  style={{ width: `${(counts[s] / total) * 100}%` }}
-                />
-              ) : null
-            )}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <MoodPill active={filter === 'all'} onClick={() => setFilter('all')}>
-              All <span className="tabular-nums opacity-70">{total}</span>
-            </MoodPill>
-            {(['positive', 'negative', 'neutral'] as Sentiment[]).map((s) => {
-              const m = SENTIMENT_META[s]
-              return (
-                <MoodPill
-                  key={s}
-                  active={filter === s}
-                  onClick={() => setFilter(s)}
-                >
-                  <m.Icon aria-hidden className={cn('size-3', m.text)} />
-                  {m.label}
-                  <span className="tabular-nums opacity-70">{counts[s]}</span>
-                </MoodPill>
-              )
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Ticker + watchlist filters */}
-      {(tickers.length > 0 || watchlist.length > 0) && (
-        <div className="flex flex-wrap items-center gap-2">
-          {tickers.length > 0 && (
-            <DropdownMenu>
-              <DropdownMenuTrigger className="inline-flex h-7 items-center gap-1.5 rounded-full bg-white/[0.03] px-3 text-xs font-medium text-muted-foreground ring-1 ring-inset ring-white/[0.07] transition-colors hover:bg-white/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60">
-                {ticker === 'all' ? 'All tickers' : ticker}
-                <ChevronDown aria-hidden className="size-3.5" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="start"
-                className="max-h-72 overflow-y-auto"
-              >
-                <DropdownMenuItem onClick={() => setTicker('all')}>
-                  All tickers
-                </DropdownMenuItem>
-                {tickers.map((t) => (
-                  <DropdownMenuItem key={t} onClick={() => setTicker(t)}>
-                    {t}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-          {watchlist.length > 0 && (
-            <MoodPill
-              active={watchlistOnly}
-              onClick={() => setWatchlistOnly((v) => !v)}
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
+      <aside className="flex flex-col gap-4 lg:sticky lg:top-20 lg:order-2">
+        <Card size="sm">
+          <CardContent className="flex flex-col gap-3">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="text-sm font-semibold">Market mood</span>
+              <span className={cn('text-sm font-semibold', mood.cls)}>{mood.text}</span>
+            </div>
+            <div
+              role="img"
+              aria-label={`${counts.positive} bullish, ${counts.negative} bearish, ${counts.neutral} neutral headlines`}
+              className="flex h-2 w-full gap-0.5 overflow-hidden rounded-full bg-white/[0.05]"
             >
-              <Star aria-hidden className="size-3" />
-              Watchlist only
-            </MoodPill>
-          )}
-        </div>
-      )}
-
-      {filtered.length === 0 ? (
-        <Card>
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            No headlines match these filters.
+              {(['positive', 'neutral', 'negative'] as Sentiment[]).map((s) =>
+                counts[s] > 0 ? (
+                  <div
+                    key={s}
+                    className={cn('first:rounded-l-full last:rounded-r-full', SENTIMENT_META[s].bar)}
+                    style={{ width: `${(counts[s] / total) * 100}%` }}
+                  />
+                ) : null
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {total} headlines over the last 7 days
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              <MoodPill active={filter === 'all'} onClick={() => setFilter('all')}>
+                All <span className="tabular-nums opacity-70">{total}</span>
+              </MoodPill>
+              {(['positive', 'negative', 'neutral'] as Sentiment[]).map((s) => {
+                const m = SENTIMENT_META[s]
+                return (
+                  <MoodPill key={s} active={filter === s} onClick={() => setFilter(s)}>
+                    <m.Icon aria-hidden className={cn('size-3', m.text)} />
+                    {m.label}
+                    <span className="tabular-nums opacity-70">{counts[s]}</span>
+                  </MoodPill>
+                )
+              })}
+            </div>
           </CardContent>
         </Card>
-      ) : (
-        <>
-          {featured && (
-            <FeaturedStory article={featured} watchlistSet={watchlistSet} />
-          )}
-          {groups.map((g) => (
-            <Card key={g.label} variant="list" className="py-3">
-              <CardContent className="px-0">
-                <div className="px-5 pb-3 pt-1 text-xs font-medium text-muted-foreground">
-                  {g.label}
-                </div>
-                <ul className="divide-y divide-border border-t border-border">
-                  {g.items.map((a) => (
-                    <li key={a.id}>
-                      <ArticleRow article={a} watchlistSet={watchlistSet} />
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          ))}
-        </>
-      )}
 
-      <p className="text-xs text-muted-foreground">
-        Sentiment is estimated from headlines — not investment advice.
-      </p>
+        {(topTickers.length > 0 || watchlist.length > 0) && (
+          <Card size="sm">
+            <CardContent className="flex flex-col gap-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm font-semibold">Most mentioned</span>
+                {watchlist.length > 0 && (
+                  <MoodPill active={watchlistOnly} onClick={() => setWatchlistOnly((v) => !v)}>
+                    <Star aria-hidden className="size-3" />
+                    My watchlist
+                  </MoodPill>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {topTickers.map((t) => (
+                  <MoodPill
+                    key={t}
+                    active={ticker === t}
+                    onClick={() => setTicker(ticker === t ? 'all' : t)}
+                  >
+                    {t}
+                    <span className="tabular-nums opacity-60">{tickerCount(t)}</span>
+                  </MoodPill>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <p className="hidden text-xs text-muted-foreground lg:block">
+          Sentiment is estimated from headlines — not investment advice.
+        </p>
+      </aside>
+
+      <div className="flex min-w-0 flex-col gap-4 lg:order-1 lg:col-span-2">
+        {!noFilters && (
+          <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+            <span>
+              Showing {filtered.length} of {total} headlines
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setFilter('all')
+                setTicker('all')
+                setWatchlistOnly(false)
+              }}
+              className="font-medium text-primary hover:text-primary/80"
+            >
+              Clear filters
+            </button>
+          </div>
+        )}
+        {filtered.length === 0 ? (
+          <Card>
+            <CardContent className="py-10 text-center text-sm text-muted-foreground">
+              No headlines match these filters.
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            {featured && (
+              <FeaturedStory article={featured} watchlistSet={watchlistSet} />
+            )}
+            <Card variant="list" className="gap-0 py-0">
+              {groups.map((g) => (
+                <section key={g.label}>
+                  <h3 className="border-b border-border bg-white/[0.015] px-5 py-2 text-xs font-medium text-muted-foreground">
+                    {g.label}
+                  </h3>
+                  <ul className="divide-y divide-border">
+                    {g.items.map((a) => (
+                      <li key={a.id}>
+                        <ArticleRow article={a} watchlistSet={watchlistSet} />
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </Card>
+          </>
+        )}
+        <p className="text-xs text-muted-foreground lg:hidden">
+          Sentiment is estimated from headlines — not investment advice.
+        </p>
+      </div>
     </div>
   )
 }
@@ -388,50 +400,41 @@ function ArticleRow({
 }) {
   const m = SENTIMENT_META[article.sentiment]
   return (
-    <div className={cn('border-l-2 px-5 py-3', m.accent)}>
-      <a
-        href={article.url}
-        target="_blank"
-        rel="noreferrer"
-        className="group flex gap-3 focus-visible:outline-none"
-      >
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium leading-snug group-hover:underline underline-offset-2">
-            {article.headline}
-          </p>
-          {article.summary && (
-            <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
-              {article.summary}
-            </p>
-          )}
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-            <SentimentMark sentiment={article.sentiment} />
-            {article.source && (
-              <span className="truncate max-w-[10rem]">{article.source}</span>
-            )}
-            <span className="whitespace-nowrap tabular-nums">
-              {timeAgo(article.datetime)}
-            </span>
-          </div>
-        </div>
-        <NewsThumb
-          src={article.image}
-          className="h-14 w-20 shrink-0 rounded-md object-cover"
-        />
-      </a>
-      {article.symbols.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1.5">
+    <div className={cn('flex gap-3 border-l-2 px-5 py-3 transition-colors hover:bg-white/[0.02]', m.accent)}>
+      <div className="min-w-0 flex-1">
+        <a
+          href={article.url}
+          target="_blank"
+          rel="noreferrer"
+          className="line-clamp-2 text-sm font-medium leading-snug hover:underline hover:underline-offset-2 focus-visible:outline-none focus-visible:underline"
+          title={article.summary || undefined}
+        >
+          {article.headline}
+        </a>
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+          <SentimentMark sentiment={article.sentiment} />
+          {article.source && <span className="max-w-[10rem] truncate">{article.source}</span>}
+          <span aria-hidden>·</span>
+          <span className="whitespace-nowrap tabular-nums">{timeAgo(article.datetime)}</span>
+          {article.symbols.length > 0 && <span aria-hidden>·</span>}
           {article.symbols.map((s) => (
-            <SymbolBadge
+            <Link
               key={s}
-              symbol={s}
-              size="sm"
               href={`/stocks/${s}`}
-              active={watchlistSet.has(s)}
-            />
+              className={cn(
+                'font-semibold tabular-nums transition-colors hover:text-primary',
+                watchlistSet.has(s) ? 'text-primary' : 'text-foreground/80'
+              )}
+            >
+              {s}
+            </Link>
           ))}
         </div>
-      )}
+      </div>
+      <NewsThumb
+        src={article.image}
+        className="h-14 w-20 shrink-0 rounded-lg object-cover"
+      />
     </div>
   )
 }

@@ -29,7 +29,7 @@ type EnrichedArticle = FinnhubNewsArticle & {
 
 export default function NewsPage() {
   return (
-    <PageContainer width="narrow">
+    <PageContainer>
       <PageHeader
         icon={JournalPage}
         title="Market news"

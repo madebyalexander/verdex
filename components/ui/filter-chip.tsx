@@ -15,7 +15,7 @@ export function FilterChip({
       type="button"
       aria-pressed={active}
       className={cn(
-        'inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-xs font-medium whitespace-nowrap ring-1 ring-inset transition-colors',
+        'inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-medium whitespace-nowrap ring-1 ring-inset transition-colors',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60',
         'disabled:pointer-events-none disabled:opacity-40',
         active

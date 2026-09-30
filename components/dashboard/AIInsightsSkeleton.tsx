@@ -21,7 +21,7 @@ export function AIInsightsSkeleton() {
         </div>
       </div>
 
-      <div className="grid gap-3 p-5 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-3 p-4 sm:p-5 lg:grid-cols-5">
         <div className="flex flex-col gap-5 rounded-2xl bg-black/25 p-5 ring-1 ring-inset ring-primary/25 lg:col-span-3">
           <div className="flex items-center gap-3">
             <div className="size-11 rounded-xl bg-white/[0.06] animate-pulse" />
@@ -50,19 +50,18 @@ export function AIInsightsSkeleton() {
         </div>
         <div className="flex flex-col gap-2 lg:col-span-2">
           <Bar className="mx-1 h-3 w-24" />
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="flex flex-1 items-center gap-3 rounded-xl bg-black/20 p-3 ring-1 ring-inset ring-white/[0.06]"
-            >
-              <div className="size-9 rounded-lg bg-white/[0.06] animate-pulse" />
-              <div className="flex flex-1 flex-col gap-1.5">
-                <Bar className="h-3.5 w-14" />
-                <Bar className="h-3 w-32" />
+          <div className="flex flex-col divide-y divide-white/[0.06] rounded-2xl bg-black/20 ring-1 ring-inset ring-white/[0.06]">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 px-3.5 py-3">
+                <div className="size-9 rounded-lg bg-white/[0.06] animate-pulse" />
+                <div className="flex flex-1 flex-col gap-1.5">
+                  <Bar className="h-3.5 w-14" />
+                  <Bar className="h-3 w-32" />
+                </div>
+                <Bar className="h-4 w-14" />
               </div>
-              <Bar className="h-4 w-14" />
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </AICard>

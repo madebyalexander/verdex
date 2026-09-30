@@ -12,6 +12,7 @@ import {
 import { StockLogo } from '@/components/ui/stock-logo'
 import { directionText } from '@/components/ui/change-badge'
 import { readCssColor } from '@/lib/css-color'
+import { chartTickFormatter } from '@/lib/chart-time'
 import { cn } from '@/lib/utils'
 
 export type CompareSeries = {
@@ -48,13 +49,7 @@ export function CompareChart({ series }: { series: CompareSeries[] }) {
         borderVisible: false,
         fixLeftEdge: true,
         fixRightEdge: true,
-        tickMarkFormatter: (time: number | string) => {
-          const d = typeof time === 'string' ? new Date(time) : new Date(time)
-          return d.toLocaleDateString(undefined, {
-            month: 'short',
-            year: '2-digit',
-          })
-        },
+        tickMarkFormatter: chartTickFormatter,
       },
       rightPriceScale: { borderVisible: false },
       crosshair: {

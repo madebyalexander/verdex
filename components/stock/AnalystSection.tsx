@@ -5,13 +5,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { EmptyState } from '@/components/ui/empty-state'
+import { directionText } from '@/components/ui/change-badge'
 import {
   getRecommendations,
   type FinnhubRecommendation,
 } from '@/lib/apis/finnhub'
 import { cn } from '@/lib/utils'
-import { IoArrowDown as ArrowDown, IoArrowUp as ArrowUp } from 'react-icons/io5'
+import { IoPeople as People } from 'react-icons/io5'
 
 function totalAnalysts(r: FinnhubRecommendation): number {
   return r.strongBuy + r.buy + r.hold + r.sell + r.strongSell
@@ -21,21 +22,26 @@ function avgRating(r: FinnhubRecommendation): number {
   const total = totalAnalysts(r)
   if (total === 0) return 0
   return (
-    (r.strongBuy * 5 +
-      r.buy * 4 +
-      r.hold * 3 +
-      r.sell * 2 +
-      r.strongSell * 1) /
+    (r.strongBuy * 5 + r.buy * 4 + r.hold * 3 + r.sell * 2 + r.strongSell * 1) /
     total
   )
 }
 
+function consensusLabel(rating: number): string {
+  if (rating >= 4.5) return 'Strong buy'
+  if (rating >= 3.5) return 'Buy'
+  if (rating >= 2.5) return 'Hold'
+  if (rating >= 1.5) return 'Sell'
+  return 'Strong sell'
+}
+
+// Diverging scale: two greens, neutral gray midpoint, amber then rose.
 const BUCKETS = [
-  { key: 'strongBuy', label: 'Strong Buy', color: '#10B981' }, // emerald-500
-  { key: 'buy', label: 'Buy', color: '#34D399' }, // emerald-400
-  { key: 'hold', label: 'Hold', color: '#A1A1AA' }, // zinc-400
-  { key: 'sell', label: 'Sell', color: '#FBBF24' }, // amber-400
-  { key: 'strongSell', label: 'Strong Sell', color: '#F43F5E' }, // rose-500
+  { key: 'strongBuy', label: 'Strong buy', bar: 'bg-emerald-500' },
+  { key: 'buy', label: 'Buy', bar: 'bg-emerald-400/70' },
+  { key: 'hold', label: 'Hold', bar: 'bg-zinc-400/60' },
+  { key: 'sell', label: 'Sell', bar: 'bg-rose-400/70' },
+  { key: 'strongSell', label: 'Strong sell', bar: 'bg-rose-500' },
 ] as const
 
 export async function AnalystSection({ symbol }: { symbol: string }) {
@@ -44,130 +50,135 @@ export async function AnalystSection({ symbol }: { symbol: string }) {
     recs = await getRecommendations(symbol)
   } catch (err) {
     console.error('[AnalystSection]', err)
-    return <ErrorCard message="Couldn't load analyst recommendations." />
-  }
-
-  if (recs.length === 0) {
-    return <EmptyCard message="No analyst data available for this symbol." />
+    return <Empty message="Couldn't load analyst recommendations." />
   }
 
   const current = recs[0]
-  const total = totalAnalysts(current)
-  if (total === 0) {
-    return <EmptyCard message="No analyst data available for this symbol." />
+  const total = current ? totalAnalysts(current) : 0
+  if (!current || total === 0) {
+    return <Empty message="No analyst coverage reported for this symbol." />
   }
 
-  const prev3mo = recs[3] ?? null
-  const ratingNow = avgRating(current)
-  const ratingThen =
-    prev3mo && totalAnalysts(prev3mo) > 0 ? avgRating(prev3mo) : null
-  const ratingShift = ratingThen !== null ? ratingNow - ratingThen : null
+  const rating = avgRating(current)
+  const prev = recs[3] ?? null
+  const shift = prev && totalAnalysts(prev) > 0 ? rating - avgRating(prev) : null
+  const lean = rating >= 3.5 ? 1 : rating < 2.5 ? -1 : 0
+  // Oldest first so the eye reads the trend left-to-right, top-to-bottom.
+  const history = recs
+    .slice(0, 4)
+    .filter((r) => totalAnalysts(r) > 0)
+    .reverse()
 
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
-        <CardTitle>Analyst recommendations</CardTitle>
+        <CardTitle>Analyst consensus</CardTitle>
         <CardDescription>
-          {total} analysts · period {current.period} · Finnhub
+          {total} analysts · as of {current.period} · Finnhub
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <div className="flex items-baseline gap-3 flex-wrap">
-          <span className="text-2xl font-semibold tabular-nums">
-            {ratingNow.toFixed(1)}
-          </span>
-          <span className="text-sm text-muted-foreground">/ 5.0 average</span>
-          {ratingShift !== null && Math.abs(ratingShift) > 0.05 && (
-            <RatingShiftBadge shift={ratingShift} />
+      <CardContent className="flex flex-col gap-5">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p className={cn('text-2xl font-semibold tracking-tight', directionText(lean))}>
+              {consensusLabel(rating)}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Average {rating.toFixed(1)} of 5
+            </p>
+          </div>
+          {shift !== null && Math.abs(shift) >= 0.05 && (
+            <p className="text-right text-xs text-muted-foreground">
+              <span className={cn('font-medium', directionText(shift))}>
+                {shift > 0 ? 'Upgraded' : 'Downgraded'} {Math.abs(shift).toFixed(2)}
+              </span>
+              <br />
+              vs 3 months ago
+            </p>
           )}
         </div>
 
         <div
           role="img"
-          aria-label={`Analyst distribution: ${BUCKETS.map(
-            (b) => `${current[b.key]} ${b.label}`
-          ).join(', ')}`}
-          className="flex h-3 rounded-md overflow-hidden bg-muted"
+          aria-label={`Analyst distribution: ${BUCKETS.map((b) => `${current[b.key]} ${b.label}`).join(', ')}`}
+          className="flex h-2.5 gap-0.5 overflow-hidden rounded-full"
         >
-          {BUCKETS.map(({ key, label, color }) => {
-            const count = current[key]
-            if (count === 0) return null
-            const pct = (count / total) * 100
-            return (
+          {BUCKETS.map(({ key, bar }) =>
+            current[key] > 0 ? (
               <div
                 key={key}
-                style={{ background: color, width: `${pct}%` }}
-                title={`${label}: ${count}`}
+                className={cn('first:rounded-l-full last:rounded-r-full', bar)}
+                style={{ width: `${(current[key] / total) * 100}%` }}
               />
+            ) : null
+          )}
+        </div>
+
+        <ul className="flex flex-col gap-1.5">
+          {BUCKETS.map(({ key, label, bar }) => {
+            const count = current[key]
+            const pct = (count / total) * 100
+            return (
+              <li key={key} className="flex items-center gap-2.5 text-sm">
+                <span aria-hidden className={cn('size-2 shrink-0 rounded-full', bar)} />
+                <span className="flex-1 text-muted-foreground">{label}</span>
+                <span className="w-8 text-right font-medium tabular-nums">{count}</span>
+                <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">
+                  {pct.toFixed(0)}%
+                </span>
+              </li>
             )
           })}
-        </div>
+        </ul>
 
-        <div className="grid grid-cols-5 gap-1.5 text-xs">
-          {BUCKETS.map(({ key, label, color }) => (
-            <div
-              key={key}
-              className="flex flex-col items-center gap-1 text-center"
-            >
-              <span
-                aria-hidden
-                className="size-2 shrink-0 rounded-sm"
-                style={{ background: color }}
-              />
-              <span className="leading-tight text-muted-foreground">{label}</span>
-              <span className="font-semibold tabular-nums">{current[key]}</span>
-            </div>
-          ))}
-        </div>
+        {history.length > 1 && (
+          <div className="flex flex-col gap-2 border-t border-border pt-4">
+            <p className="text-xs text-muted-foreground">
+              Rating trend · last {history.length} months
+            </p>
+            <ul className="flex flex-col gap-1.5">
+              {history.map((r) => {
+                const t = totalAnalysts(r)
+                return (
+                  <li key={r.period} className="flex items-center gap-3">
+                    <span className="w-9 text-xs text-muted-foreground">
+                      {new Date(`${r.period}T00:00:00`).toLocaleDateString(undefined, { month: 'short' })}
+                    </span>
+                    <span className="flex h-1.5 flex-1 gap-0.5 overflow-hidden rounded-full">
+                      {BUCKETS.map(({ key, bar }) =>
+                        r[key] > 0 ? (
+                          <span
+                            key={key}
+                            className={cn('first:rounded-l-full last:rounded-r-full', bar)}
+                            style={{ width: `${(r[key] / t) * 100}%` }}
+                          />
+                        ) : null
+                      )}
+                    </span>
+                    <span className="w-7 text-right text-xs tabular-nums">
+                      {avgRating(r).toFixed(1)}
+                    </span>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        )}
       </CardContent>
     </Card>
   )
 }
 
-function RatingShiftBadge({ shift }: { shift: number }) {
-  const isUp = shift >= 0
-  const Icon = isUp ? ArrowUp : ArrowDown
+function Empty({ message }: { message: string }) {
   return (
-    <Badge
-      variant="outline"
-      className={cn(
-        'border-transparent ring-1 ring-inset gap-1',
-        isUp
-          ? 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20'
-          : 'bg-rose-500/10 text-rose-400 ring-rose-500/20'
-      )}
-    >
-      <Icon aria-hidden className="size-3" />
-      <span className="tabular-nums">
-        {isUp ? '+' : ''}
-        {shift.toFixed(2)} vs 3mo
-      </span>
-    </Badge>
-  )
-}
-
-function ErrorCard({ message }: { message: string }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Analyst recommendations</CardTitle>
-      </CardHeader>
-      <CardContent className="text-sm py-6 text-center rounded-md text-muted-foreground bg-secondary">
-        {message}
-      </CardContent>
-    </Card>
-  )
-}
-
-function EmptyCard({ message }: { message: string }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Analyst recommendations</CardTitle>
-      </CardHeader>
-      <CardContent className="text-sm py-6 text-center text-muted-foreground">
-        {message}
-      </CardContent>
+    <Card className="h-full">
+      <EmptyState
+        icon={People}
+        tone="muted"
+        title="Analyst consensus"
+        description={message}
+        className="py-10"
+      />
     </Card>
   )
 }

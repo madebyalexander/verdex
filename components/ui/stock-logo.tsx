@@ -4,34 +4,39 @@ import { useState } from 'react'
 import { cn } from '@/lib/utils'
 
 /**
- * Square company logo resolved by ticker from FMP's public image CDN.
- * The logo image sits inside a fixed tile (consistent size + dark surface)
- * with `object-contain` + small padding so logos of varying aspect ratio
- * and internal whitespace all render in an identical frame.
+ * Company logo in a fixed tile. Tries the provider logo (`src`, e.g. Finnhub's
+ * profile logo) first, then FMP's public ticker image CDN, then a letter tile —
+ * so a dead or missing URL never shows a broken-image icon.
  *
- * Falls back to a letter tile if the logo 404s or fails to load.
+ * `light` puts the image on a white tile: most company marks are drawn for
+ * light backgrounds and disappear on dark surfaces at larger sizes.
  *
  * `className` controls the tile size + rounding + (for the fallback) text
  * size, e.g. `className="size-7 rounded-md text-[11px]"`.
  */
 export function StockLogo({
   symbol,
+  src,
+  light = false,
   className,
 }: {
   symbol: string
+  src?: string | null
+  light?: boolean
   className?: string
 }) {
-  const [failed, setFailed] = useState(false)
-  const src = `https://financialmodelingprep.com/image-stock/${encodeURIComponent(
-    symbol
-  )}.png`
+  const sources = [
+    src || null,
+    `https://financialmodelingprep.com/image-stock/${encodeURIComponent(symbol)}.png`,
+  ].filter((s): s is string => !!s)
+  const [attempt, setAttempt] = useState(0)
 
-  if (failed) {
+  if (attempt >= sources.length) {
     return (
       <span
         aria-hidden
         className={cn(
-          'inline-flex items-center justify-center shrink-0 bg-secondary text-foreground/80 font-semibold uppercase',
+          'inline-flex shrink-0 items-center justify-center bg-secondary font-semibold uppercase text-foreground/80',
           className
         )}
       >
@@ -44,17 +49,19 @@ export function StockLogo({
     <span
       aria-hidden
       className={cn(
-        'inline-flex items-center justify-center shrink-0 overflow-hidden bg-secondary',
+        'inline-flex shrink-0 items-center justify-center overflow-hidden',
+        light ? 'bg-white' : 'bg-secondary',
         className
       )}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={src}
+        key={sources[attempt]}
+        src={sources[attempt]}
         alt=""
         loading="lazy"
         decoding="async"
-        onError={() => setFailed(true)}
+        onError={() => setAttempt((a) => a + 1)}
         className="size-full object-contain p-[15%]"
       />
     </span>

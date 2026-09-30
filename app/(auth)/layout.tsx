@@ -64,7 +64,7 @@ export default function AuthLayout({
           aria-hidden
           viewBox="0 0 600 200"
           preserveAspectRatio="none"
-          className="pointer-events-none absolute inset-x-0 bottom-28 h-40 w-full"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-28 w-full opacity-80"
         >
           <defs>
             <linearGradient id="auth-line" x1="0" x2="1" y1="0" y2="0">
@@ -124,11 +124,13 @@ export default function AuthLayout({
               </li>
             ))}
           </ul>
+          <p className="text-xs text-muted-foreground/70">
+            Research tool only — Verdex never places trades.
+          </p>
         </div>
 
-        <p className="relative text-xs text-muted-foreground/70">
-          Research tool only — Verdex never places trades.
-        </p>
+        {/* Bottom band is left to the decorative trend line. */}
+        <div aria-hidden className="h-20" />
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">

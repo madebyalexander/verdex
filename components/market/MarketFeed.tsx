@@ -59,15 +59,15 @@ export function MarketFeed() {
   return (
     <Card variant="list">
       <CardContent className="px-0">
-        <MarketTableHeader />
+        <MarketTableHeader trend={false} />
 
         {stocks.length === 0 && loading ? (
-          <StockSkeletonRows count={12} />
+          <StockSkeletonRows count={12} trend={false} />
         ) : (
           <ul className="divide-y divide-border border-t border-border">
             {stocks.map((stock) => (
               <li key={stock.symbol}>
-                <StockRow stock={stock} />
+                <StockRow stock={stock} trend={false} />
               </li>
             ))}
           </ul>

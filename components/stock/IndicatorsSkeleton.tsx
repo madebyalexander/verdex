@@ -1,28 +1,18 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export function IndicatorsSkeleton() {
   return (
-    <Card>
+    <Card aria-busy="true">
       <CardHeader>
-        <CardTitle>Technical indicators</CardTitle>
-        <CardDescription>Computing…</CardDescription>
+        <CardTitle>Technical signals</CardTitle>
+        <div className="h-3.5 w-64 rounded bg-muted animate-pulse" />
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 rounded-md" />
+        <div className="h-[74px] rounded-2xl bg-muted/60 animate-pulse" />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-28 rounded-2xl bg-muted/50 animate-pulse" />
           ))}
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Skeleton className="h-32 rounded-md" />
-          <Skeleton className="h-32 rounded-md" />
         </div>
       </CardContent>
     </Card>

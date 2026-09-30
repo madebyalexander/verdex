@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { buttonVariants } from '@/components/ui/button'
-import { ChangeText, directionText } from '@/components/ui/change-badge'
+import { ChangeText, directionBg, directionText } from '@/components/ui/change-badge'
 import { EmptyState } from '@/components/ui/empty-state'
 import { StockLogo } from '@/components/ui/stock-logo'
 import { listPositions } from '@/lib/portfolio'
@@ -143,10 +143,10 @@ async function PortfolioContent() {
     <>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardContent className="flex h-full flex-col justify-between gap-8">
+          <CardContent className="flex h-full flex-col gap-6">
             <div className="flex flex-col gap-1.5">
               <p className="text-sm text-muted-foreground">Total value</p>
-              <p className="text-4xl font-semibold tracking-tight tabular-nums sm:text-5xl">
+              <p className="text-4xl font-semibold tracking-tight sm:text-5xl">
                 {usd(totalValue)}
               </p>
               <ChangeText
@@ -156,7 +156,8 @@ async function PortfolioContent() {
                 className="text-base"
               />
             </div>
-            <dl className="grid grid-cols-2 gap-x-6 gap-y-5 border-t border-border pt-5 sm:grid-cols-4">
+            <ReturnByHolding rows={rows} />
+            <dl className="mt-auto grid grid-cols-2 gap-x-6 gap-y-5 border-t border-border pt-5 sm:grid-cols-4">
               <Kpi label="Today">
                 <ChangeText pct={todaysPLPct} abs={todaysPL} className="text-sm" />
               </Kpi>
@@ -201,7 +202,38 @@ async function PortfolioContent() {
           <CardTitle>Positions</CardTitle>
           <CardDescription>Cost basis vs live market value</CardDescription>
         </CardHeader>
-        <div className="relative overflow-x-auto [mask-image:linear-gradient(to_right,black_calc(100%-1.5rem),transparent)] sm:[mask-image:none]">
+        {/* Phones: stacked rows instead of a sideways-scrolling table. */}
+        <ul className="divide-y divide-border border-t border-border md:hidden">
+          {rows.map((p) => (
+            <li key={p.id} className="flex items-center gap-3 px-5 py-3">
+              <Link
+                href={`/stocks/${p.symbol}`}
+                className="flex min-w-0 flex-1 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+              >
+                <StockLogo
+                  symbol={p.symbol}
+                  className="size-9 rounded-xl text-xs ring-1 ring-inset ring-white/[0.06]"
+                />
+                <span className="flex min-w-0 flex-col">
+                  <span className="font-semibold tabular-nums">{p.symbol}</span>
+                  <span className="truncate text-xs text-muted-foreground tabular-nums">
+                    {p.qty.toLocaleString(undefined, { maximumFractionDigits: 4 })} sh · avg {usd(p.cb)}
+                  </span>
+                </span>
+              </Link>
+              <span className="flex shrink-0 flex-col items-end">
+                <span className="text-sm font-medium tabular-nums">
+                  {p.value != null ? usd(p.value) : '—'}
+                </span>
+                {p.pl != null && (
+                  <ChangeText pct={p.plPct} abs={p.pl} showIcon={false} className="justify-end text-xs" />
+                )}
+              </span>
+              <DeletePositionButton id={p.id} />
+            </li>
+          ))}
+        </ul>
+        <div className="relative hidden overflow-x-auto md:block">
           <table className="w-full min-w-[680px] text-sm">
             <thead>
               <tr className="border-b border-border text-xs text-muted-foreground">
@@ -290,11 +322,64 @@ async function PortfolioContent() {
   )
 }
 
+/**
+ * Diverging bars: each holding's unrealised P/L from a shared zero line,
+ * gains right in green, losses left in red — shows where returns come from.
+ */
+function ReturnByHolding({
+  rows,
+}: {
+  rows: { symbol: string; pl: number | null; plPct: number | null }[]
+}) {
+  const withPl = rows
+    .filter((r): r is typeof r & { pl: number } => r.pl != null)
+    .sort((a, b) => b.pl - a.pl)
+  if (withPl.length === 0) return null
+  const maxAbs = Math.max(...withPl.map((r) => Math.abs(r.pl))) || 1
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      <p className="text-xs font-medium text-muted-foreground">Return by holding</p>
+      <ul className="flex flex-col gap-1.5">
+        {withPl.map((r) => {
+          const w = (Math.abs(r.pl) / maxAbs) * 100
+          const up = r.pl >= 0
+          return (
+            <li key={r.symbol} className="grid grid-cols-[3.5rem_1fr_1fr_6.5rem] items-center gap-2 text-sm">
+              <span className="font-medium tabular-nums">{r.symbol}</span>
+              <span className="flex h-2 justify-end">
+                {!up && (
+                  <span
+                    className={cn('h-full rounded-l-sm', directionBg(-1))}
+                    style={{ width: `${w}%` }}
+                  />
+                )}
+              </span>
+              <span className="flex h-2 border-l border-white/20">
+                {up && (
+                  <span
+                    className={cn('h-full rounded-r-sm', directionBg(1))}
+                    style={{ width: `${w}%` }}
+                  />
+                )}
+              </span>
+              <span className={cn('text-right text-xs font-medium tabular-nums', directionText(r.pl))}>
+                {up ? '+' : '−'}
+                {usd(Math.abs(r.pl))}
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
 function Kpi({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex min-w-0 flex-col gap-1">
       <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="truncate text-[15px] font-semibold tabular-nums">{children}</dd>
+      <dd className="text-[15px] font-semibold tabular-nums">{children}</dd>
     </div>
   )
 }

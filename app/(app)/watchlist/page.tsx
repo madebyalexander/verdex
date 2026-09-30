@@ -20,9 +20,9 @@ import { AlertsSkeleton } from '@/components/alerts/AlertsSkeleton'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { SectionHeader } from '@/components/layout/SectionHeader'
-import { CardStack } from '@/components/layout/CardStack'
 
-import { usd } from '@/lib/format'
+import { compactUsd, usd } from '@/lib/format'
+import { RangeBar } from '@/components/ui/range-bar'
 import { IoStar as Star, IoChevronForward as ChevronRight } from 'react-icons/io5'
 
 type EnrichedItem = WatchlistItem & {
@@ -38,28 +38,28 @@ export default async function WatchlistPage({
 }) {
   const { id: requestedId } = await searchParams
   return (
-    <PageContainer width="narrow">
+    <PageContainer>
       <PageHeader
         icon={Star}
         title="Watchlist"
         description="The stocks you follow and the price alerts you've set"
       />
-      <CardStack>
-        <Suspense
-          key={requestedId ?? '_'}
-          fallback={<WatchlistSkeleton />}
-        >
-          <WatchlistContent requestedId={requestedId} />
-        </Suspense>
-
-        <SectionHeader
-          title="Price alerts"
-          description="Checked whenever you open the stock — fires once the price crosses your target"
-        />
-        <Suspense fallback={<AlertsSkeleton />}>
-          <AlertsSection />
-        </Suspense>
-      </CardStack>
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:items-start lg:gap-6">
+        <div className="min-w-0 lg:col-span-2">
+          <Suspense key={requestedId ?? '_'} fallback={<WatchlistSkeleton />}>
+            <WatchlistContent requestedId={requestedId} />
+          </Suspense>
+        </div>
+        <section className="flex flex-col gap-4 lg:sticky lg:top-20">
+          <SectionHeader
+            title="Price alerts"
+            description="Checked when you open the stock — fires once the price crosses your target"
+          />
+          <Suspense fallback={<AlertsSkeleton />}>
+            <AlertsSection />
+          </Suspense>
+        </section>
+      </div>
     </PageContainer>
   )
 }
@@ -127,6 +127,14 @@ async function WatchlistContent({ requestedId }: { requestedId?: string }) {
           className="py-10"
         />
       ) : (
+        <>
+        <div className="hidden grid-cols-[1.3fr_1fr_5.5rem_auto] gap-4 border-b border-border px-5 py-2.5 text-xs font-medium text-muted-foreground md:grid lg:grid-cols-[1.3fr_1fr_5.5rem_7rem_auto]">
+          <span>Stock</span>
+          <span>Day range</span>
+          <span className="hidden text-right lg:block">Mkt cap</span>
+          <span className="text-right">Price</span>
+          <span className="w-4" aria-hidden />
+        </div>
         <ul className="divide-y divide-border">
           {enriched.map((item) => (
             <li key={item.symbol}>
@@ -134,6 +142,7 @@ async function WatchlistContent({ requestedId }: { requestedId?: string }) {
             </li>
           ))}
         </ul>
+        </>
       )}
     </Card>
   )
@@ -161,35 +170,39 @@ function WatchlistRow({ item }: { item: EnrichedItem }) {
     )
   }
 
+  const { quote, profile } = item
+  const capUsd = (profile.marketCapitalization ?? 0) * 1_000_000
   return (
     <Link
       href={`/stocks/${item.symbol}`}
-      className="group flex items-center gap-3.5 px-5 py-3.5 transition-colors hover:bg-white/[0.025] focus-visible:outline-none focus-visible:bg-white/[0.04]"
+      className="group grid grid-cols-[1fr_auto] items-center gap-4 px-5 py-3.5 transition-colors hover:bg-white/[0.025] focus-visible:bg-white/[0.04] focus-visible:outline-none md:grid-cols-[1.3fr_1fr_5.5rem_auto] lg:grid-cols-[1.3fr_1fr_5.5rem_7rem_auto]"
     >
-      <StockLogo
-        symbol={item.symbol}
-        className="size-10 rounded-xl text-xs ring-1 ring-inset ring-white/[0.06]"
-      />
-      <div className="min-w-0 flex-1">
-        <p className="font-semibold tabular-nums transition-colors group-hover:text-primary">
-          {item.symbol}
-        </p>
-        <p className="truncate text-xs text-muted-foreground">
-          {item.profile.name}
-        </p>
-      </div>
-      <div className="flex shrink-0 flex-col items-end gap-0.5">
-        <span className="font-semibold tabular-nums">{usd(item.quote.c)}</span>
-        <ChangeText
-          pct={item.quote.dp}
-          abs={item.quote.d}
-          showIcon={false}
-          className="text-xs"
+      <div className="flex min-w-0 items-center gap-3.5">
+        <StockLogo
+          symbol={item.symbol}
+          src={profile.logo || null}
+          className="size-10 rounded-xl text-xs ring-1 ring-inset ring-white/[0.06]"
         />
+        <div className="min-w-0">
+          <p className="font-semibold tabular-nums transition-colors group-hover:text-primary">
+            {item.symbol}
+          </p>
+          <p className="truncate text-xs text-muted-foreground">{profile.name}</p>
+        </div>
+      </div>
+      <div className="hidden md:block">
+        <RangeBar low={quote.l} high={quote.h} value={quote.c} />
+      </div>
+      <p className="hidden text-right text-sm tabular-nums text-muted-foreground lg:block">
+        {capUsd > 0 ? compactUsd(capUsd) : '—'}
+      </p>
+      <div className="flex flex-col items-end gap-0.5">
+        <span className="font-semibold tabular-nums">{usd(quote.c)}</span>
+        <ChangeText pct={quote.dp} abs={quote.d} showIcon={false} className="text-xs" />
       </div>
       <ChevronRight
         aria-hidden
-        className="hidden size-4 shrink-0 text-muted-foreground/60 transition-all group-hover:translate-x-0.5 group-hover:text-foreground sm:block"
+        className="hidden size-4 shrink-0 text-muted-foreground/60 transition-all group-hover:translate-x-0.5 group-hover:text-foreground md:block"
       />
     </Link>
   )

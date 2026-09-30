@@ -3,30 +3,28 @@ import { AlertsSkeleton } from '@/components/alerts/AlertsSkeleton'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { SectionHeader } from '@/components/layout/SectionHeader'
-import { CardStack } from '@/components/layout/CardStack'
 import { IoStar as Star } from 'react-icons/io5'
 
 export default function WatchlistLoading() {
   return (
-    <PageContainer width="narrow">
+    <PageContainer>
       <PageHeader
         icon={Star}
         title="Watchlist"
-        description="Your tracked stocks and price alerts"
+        description="The stocks you follow and the price alerts you've set"
       />
-      <CardStack>
-        <div className="flex flex-wrap gap-1.5">
-          <div className="h-7 w-24 rounded-full bg-muted animate-pulse" />
-          <div className="h-7 w-20 rounded-full bg-muted animate-pulse" />
-          <div className="h-7 w-28 rounded-full bg-muted animate-pulse" />
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:items-start lg:gap-6">
+        <div className="min-w-0 lg:col-span-2">
+          <WatchlistSkeleton />
         </div>
-        <WatchlistSkeleton />
-        <SectionHeader
-          title="Price alerts"
-          description="Fire when the price crosses your threshold and you visit the symbol"
-        />
-        <AlertsSkeleton />
-      </CardStack>
+        <section className="flex flex-col gap-4">
+          <SectionHeader
+            title="Price alerts"
+            description="Checked when you open the stock — fires once the price crosses your target"
+          />
+          <AlertsSkeleton />
+        </section>
+      </div>
     </PageContainer>
   )
 }

@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge'
+import { StockLogo } from '@/components/ui/stock-logo'
 import { ChangeText } from '@/components/ui/change-badge'
 import { WatchlistToggleButton } from '@/components/watchlist/WatchlistToggleButton'
 import { CreateAlertButton } from '@/components/alerts/CreateAlertButton'
@@ -46,25 +47,12 @@ export function StockHero({
     <header className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-4">
-          {logo ? (
-            // White tile: most company marks are drawn for light backgrounds.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={logo}
-              alt={`${profile.name} logo`}
-              width={56}
-              height={56}
-              decoding="async"
-              className="size-14 shrink-0 rounded-2xl bg-white object-contain p-2 ring-1 ring-white/10"
-            />
-          ) : (
-            <div
-              aria-hidden
-              className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-white/[0.06] text-base font-semibold text-muted-foreground ring-1 ring-inset ring-white/10"
-            >
-              {symbol.slice(0, 2)}
-            </div>
-          )}
+          <StockLogo
+            symbol={symbol}
+            src={logo}
+            light
+            className="size-14 rounded-2xl text-base ring-1 ring-white/10"
+          />
           <div className="flex min-w-0 flex-col gap-1">
             <h1 className="truncate text-xl font-semibold tracking-tight sm:text-2xl">
               {profile.name}

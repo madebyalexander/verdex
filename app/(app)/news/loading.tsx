@@ -6,7 +6,7 @@ import { IoDocumentText as JournalPage } from 'react-icons/io5'
 
 export default function NewsLoading() {
   return (
-    <PageContainer width="narrow">
+    <PageContainer>
       <PageHeader
         icon={JournalPage}
         title="Market news"

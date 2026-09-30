@@ -99,7 +99,7 @@ export async function AIInsights() {
   const enriched = await Promise.all(raw.map(enrich))
   const sorted = enriched.slice().sort((a, b) => b.score - a.score)
   const top = sorted[0]
-  const rest = sorted.slice(1, 5)
+  const rest = sorted.slice(1, 8)
 
   const mostRecent = Math.max(
     ...enriched.map((e) => new Date(e.generated_at).getTime())
@@ -127,17 +127,18 @@ export async function AIInsights() {
         </div>
       </div>
 
-      <div className="grid gap-3 p-5 lg:grid-cols-5">
-        <TopPickCard insight={top} className="lg:col-span-3" />
+      <div className="grid grid-cols-1 gap-3 p-4 sm:p-5 lg:grid-cols-5">
+        <TopPickCard insight={top} className="min-w-0 lg:col-span-3" />
 
         {rest.length > 0 && (
-          <div className="flex flex-col gap-2 lg:col-span-2">
+          <div className="flex min-w-0 flex-col gap-2 lg:col-span-2">
             <p className="px-1 text-xs font-medium text-muted-foreground">
               More AI calls
             </p>
-            <ul className="flex flex-1 flex-col gap-2">
-              {rest.map((i) => (
-                <li key={i.symbol} className="flex-1">
+            <ul className="flex flex-col divide-y divide-white/[0.06] overflow-hidden rounded-2xl bg-black/20 ring-1 ring-inset ring-white/[0.06]">
+              {rest.map((i, idx) => (
+                // Phones get the top 4; wide screens fill the column beside the hero.
+                <li key={i.symbol} className={idx >= 4 ? 'hidden lg:block' : undefined}>
                   <ForecastRow insight={i} />
                 </li>
               ))}
@@ -183,7 +184,7 @@ function TopPickCard({
     <Link
       href={`/stocks/${insight.symbol}`}
       className={cn(
-        'group flex flex-col gap-5 rounded-2xl bg-black/25 p-5 ring-1 ring-inset ring-primary/25 transition-colors',
+        'group flex flex-col gap-5 rounded-2xl bg-black/25 p-4 ring-1 ring-inset ring-primary/25 transition-colors sm:p-5',
         'hover:bg-black/15 hover:ring-primary/45',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         className
@@ -317,7 +318,7 @@ function ForecastRow({ insight }: { insight: EnrichedInsight }) {
   return (
     <Link
       href={`/stocks/${insight.symbol}`}
-      className="flex h-full items-center gap-3 rounded-xl bg-black/20 p-3 ring-1 ring-inset ring-white/[0.06] transition-colors hover:bg-white/[0.04] hover:ring-white/[0.1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="flex items-center gap-3 px-3.5 py-3 transition-colors hover:bg-white/[0.04] focus-visible:bg-white/[0.05] focus-visible:outline-none"
     >
       <StockLogo symbol={insight.symbol} className="size-9 rounded-lg text-xs" />
       <div className="min-w-0 flex-1">

@@ -1,16 +1,9 @@
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import {
   getUpcomingEarnings,
   type FinnhubEarningsItem,
 } from '@/lib/apis/finnhub'
 import { compactUsd } from '@/lib/format'
+import { IoCalendar as Calendar } from 'react-icons/io5'
 
 const HOUR_LABELS: Record<string, string> = {
   bmo: 'Before open',
@@ -35,78 +28,53 @@ export async function EarningsSection({ symbol }: { symbol: string }) {
     (e) => new Date(e.date).getTime() >= now - 24 * 60 * 60 * 1000
   )
 
+  const next = upcoming[0]
+  if (!next) {
+    return (
+      <div className="flex items-center gap-3 rounded-2xl bg-card px-5 py-3.5 text-sm text-muted-foreground ring-1 ring-white/[0.06]">
+        <Calendar aria-hidden className="size-4 shrink-0" />
+        No earnings date announced for the next 90 days.
+      </div>
+    )
+  }
+
+  const d = new Date(`${next.date}T00:00:00`)
+  const days = Math.max(0, Math.round((d.getTime() - now) / 86_400_000))
+  const hourLabel = next.hour ? (HOUR_LABELS[next.hour] ?? null) : null
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Earnings</CardTitle>
-        <CardDescription>
-          Upcoming earnings dates and analyst estimates · next 90 days
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="px-0">
-        {upcoming.length === 0 ? (
-          <p className="px-5 py-6 text-center text-sm text-muted-foreground">
-            No upcoming earnings announced.
+    <div className="surface-highlight flex flex-wrap items-center gap-x-6 gap-y-3 rounded-2xl bg-card px-5 py-4 ring-1 ring-white/[0.06]">
+      <div className="flex items-center gap-3">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 ring-1 ring-inset ring-amber-500/20">
+          <Calendar aria-hidden className="size-5" />
+        </span>
+        <div>
+          <p className="text-xs text-muted-foreground">
+            Next earnings{next.quarter && next.year ? ` · Q${next.quarter} ${next.year}` : ''}
           </p>
-        ) : (
-          <ul className="divide-y divide-border border-t border-border">
-            {upcoming.map((e, idx) => (
-              <li key={`${e.date}-${idx}`}>
-                <EarningsRow earnings={e} />
-              </li>
-            ))}
-          </ul>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
-function EarningsRow({ earnings: e }: { earnings: FinnhubEarningsItem }) {
-  const d = new Date(e.date)
-  const dateLabel = d.toLocaleDateString(undefined, {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
-  const hourLabel = e.hour ? HOUR_LABELS[e.hour] ?? null : null
-  const quarterLabel =
-    e.quarter && e.year ? `Q${e.quarter} ${e.year}` : null
-
-  return (
-    <div className="flex items-center gap-4 px-5 py-3 flex-wrap">
-      <div className="flex flex-col gap-0.5 min-w-[8rem] shrink-0">
-        <span className="font-semibold text-sm tabular-nums">{dateLabel}</span>
-        <div className="flex items-center gap-2 flex-wrap">
-          {hourLabel && (
-            <span className="text-xs text-muted-foreground">{hourLabel}</span>
-          )}
-          {quarterLabel && (
-            <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
-              {quarterLabel}
-            </Badge>
-          )}
+          <p className="text-sm font-semibold">
+            {d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+            {hourLabel && <span className="font-normal text-muted-foreground"> · {hourLabel}</span>}
+          </p>
         </div>
       </div>
-      <div className="flex items-center gap-x-6 gap-y-1 text-xs flex-wrap text-muted-foreground ml-auto">
-        {e.epsEstimate != null && (
-          <span>
-            EPS est:{' '}
-            <span className="tabular-nums font-medium text-foreground">
-              ${e.epsEstimate.toFixed(2)}
-            </span>
-          </span>
+      <span className="rounded-full bg-white/[0.05] px-2.5 py-1 text-xs font-medium tabular-nums ring-1 ring-inset ring-white/[0.08]">
+        {days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : `In ${days} days`}
+      </span>
+      <dl className="ml-auto flex gap-6 text-right">
+        {next.epsEstimate != null && (
+          <div>
+            <dt className="text-xs text-muted-foreground">EPS estimate</dt>
+            <dd className="text-sm font-semibold tabular-nums">${next.epsEstimate.toFixed(2)}</dd>
+          </div>
         )}
-        {e.revenueEstimate != null && (
-          <span>
-            Rev est:{' '}
-            <span className="tabular-nums font-medium text-foreground">
-              {compactUsd(e.revenueEstimate)}
-            </span>
-          </span>
+        {next.revenueEstimate != null && (
+          <div>
+            <dt className="text-xs text-muted-foreground">Revenue estimate</dt>
+            <dd className="text-sm font-semibold tabular-nums">{compactUsd(next.revenueEstimate)}</dd>
+          </div>
         )}
-      </div>
+      </dl>
     </div>
   )
 }

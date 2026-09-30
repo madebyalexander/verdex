@@ -23,30 +23,21 @@ export function ForecastSkeleton() {
           <AIBadge>AI estimate — not advice</AIBadge>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col gap-8">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div
-              key={i}
-              className="flex flex-col gap-4 rounded-2xl bg-black/25 p-4 ring-1 ring-inset ring-white/[0.07]"
-            >
-              <Bar className="h-4 w-16" />
-              <div className="flex flex-col gap-2">
-                <Bar className="h-3 w-14" />
-                <Bar className="h-7 w-28" />
-                <Bar className="h-3 w-32" />
-              </div>
-              <Bar className="h-1.5 w-full rounded-full" />
-              <Bar className="h-3 w-full" />
-            </div>
-          ))}
+      <CardContent className="flex flex-col gap-7">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+          <Bar className="h-[268px] rounded-2xl lg:col-span-3" />
+          <div className="flex flex-col gap-2 lg:col-span-2">
+            <Bar className="h-[84px] flex-1 rounded-2xl" />
+            <Bar className="h-[84px] flex-1 rounded-2xl" />
+            <Bar className="h-[84px] flex-1 rounded-2xl" />
+          </div>
         </div>
         <div className="flex flex-col gap-2.5 border-l-2 border-primary/30 pl-4">
           <Bar className="h-4 w-full" />
-          <Bar className="h-4 w-[92%]" />
-          <Bar className="h-4 w-[70%]" />
+          <Bar className="h-4 w-[80%]" />
         </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Bar className="h-2 w-full rounded-full" />
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Bar className="h-44 rounded-2xl" />
           <Bar className="h-44 rounded-2xl" />
         </div>

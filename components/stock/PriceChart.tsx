@@ -24,6 +24,7 @@ import type { OhlcvBar } from '@/lib/apis/alpha-vantage'
 import { cn } from '@/lib/utils'
 import { usd } from '@/lib/format'
 import { readCssColor } from '@/lib/css-color'
+import { chartTickFormatter } from '@/lib/chart-time'
 import { useUxMode } from '@/components/ux/use-ux-mode'
 
 const UP_COLOR = '#34D399' // emerald-400
@@ -143,13 +144,7 @@ export function PriceChart({
         rightOffset: 0,
         minBarSpacing: 2,
         lockVisibleTimeRangeOnResize: true,
-        tickMarkFormatter: (time: number | string) => {
-          const d = typeof time === 'string' ? new Date(time) : new Date(time)
-          return d.toLocaleDateString(undefined, {
-            month: 'short',
-            year: '2-digit',
-          })
-        },
+        tickMarkFormatter: chartTickFormatter,
       },
       rightPriceScale: {
         // Simple mode reads the price from the header instead of an axis.
@@ -236,6 +231,8 @@ export function PriceChart({
       const volumeSeries = chart.addSeries(HistogramSeries, {
         priceFormat: { type: 'volume' },
         priceScaleId: '',
+        lastValueVisible: false,
+        priceLineVisible: false,
       })
       volumeSeries.priceScale().applyOptions({
         scaleMargins: { top: 0.8, bottom: 0 },

@@ -54,19 +54,12 @@ import {
 
 // Underline tabs: indicator sits on the list's bottom border.
 const TAB_CLASS =
-  'h-full flex-none px-3 text-[15px] group-data-horizontal/tabs:after:bottom-[-1px]'
+  'h-full flex-none px-2.5 text-sm sm:px-3 sm:text-[15px] group-data-horizontal/tabs:after:bottom-[-1px]'
 
 function resolveLogo(profile: FinnhubProfile): string | null {
-  if (profile.logo && profile.logo.length > 0) return profile.logo
-  if (profile.weburl) {
-    try {
-      const host = new URL(profile.weburl).hostname.replace(/^www\./, '')
-      return `https://logo.clearbit.com/${host}`
-    } catch {
-      // fall through
-    }
-  }
-  return null
+  // StockLogo falls back to FMP's ticker CDN, then a letter tile, when this
+  // is empty or fails to load.
+  return profile.logo && profile.logo.length > 0 ? profile.logo : null
 }
 
 export default async function StockDetailPage({
@@ -132,7 +125,7 @@ export default async function StockDetailPage({
         <Tabs defaultValue="forecast" className="gap-6">
           <TabsList
             variant="line"
-            className="h-11 w-full justify-start gap-1 rounded-none border-b border-border p-0"
+            className="h-11 w-full justify-start gap-0.5 rounded-none border-b border-border p-0 scrollbar-none sm:gap-1"
           >
             <TabsTrigger value="forecast" className={TAB_CLASS}>
               <Sparks aria-hidden className="size-3.5 text-primary" />
@@ -172,6 +165,9 @@ export default async function StockDetailPage({
 
           <TabsContent value="analysis" className="simple:hidden">
             <CardStack className="gap-4">
+              <Suspense fallback={<EarningsSkeleton />}>
+                <EarningsSection symbol={symbol} />
+              </Suspense>
               <Suspense fallback={<IndicatorsSkeleton />}>
                 <IndicatorsSection symbol={symbol} />
               </Suspense>
@@ -183,9 +179,6 @@ export default async function StockDetailPage({
                   <InsiderSection symbol={symbol} />
                 </Suspense>
               </div>
-              <Suspense fallback={<EarningsSkeleton />}>
-                <EarningsSection symbol={symbol} />
-              </Suspense>
             </CardStack>
           </TabsContent>
 
