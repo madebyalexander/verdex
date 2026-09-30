@@ -49,16 +49,8 @@ export default async function AppLayout({
           id="main-content"
           className="relative flex-1 min-h-0 overflow-y-auto pt-14 [scrollbar-width:thin] [scrollbar-color:var(--border)_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:border-0 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-0 [&::-webkit-scrollbar-thumb]:bg-border hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/40"
         >
-          {/* Faint brand glow at the top of every page — gives the canvas depth
-              without competing with content. */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 -z-0 h-80 bg-[radial-gradient(60%_100%_at_50%_0%,color-mix(in_oklch,var(--primary)_9%,transparent)_0%,transparent_100%)]"
-          />
-          <div className="relative">
-            {children}
-            <AppFooter />
-          </div>
+          {children}
+          <AppFooter />
         </div>
         <header className="absolute inset-x-0 top-0 z-30 flex h-14 items-center gap-2 border-b border-white/[0.06] bg-background/75 px-3 backdrop-blur-xl sm:gap-3 sm:px-5">
           <SidebarTrigger aria-label="Toggle sidebar" className="hidden md:inline-flex" />

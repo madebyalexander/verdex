@@ -7,9 +7,9 @@ import { IoSparkles as Sparks } from 'react-icons/io5'
 type Confidence = 'low' | 'medium' | 'high'
 
 /**
- * Card variant for AI-generated content. Same shape as <Card>, plus a soft
- * brand-purple glow and a purple-tinted ring so AI output is recognisable at
- * a glance anywhere in the app.
+ * Card variant for AI-generated content. Same shape as <Card>, on a faintly
+ * purple-tinted surface with a crisp purple top edge, so AI output is
+ * recognisable at a glance anywhere in the app.
  */
 function AICard({
   className,
@@ -24,7 +24,7 @@ function AICard({
       data-ai="true"
       data-size={size}
       className={cn(
-        'group/card surface-highlight relative flex flex-col gap-5 overflow-hidden rounded-[20px] ai-glow bg-card py-5 text-sm text-card-foreground ring-1 ring-primary/20',
+        'group/card surface-highlight relative flex flex-col gap-5 overflow-hidden rounded-[20px] ai-surface py-5 text-sm text-card-foreground ring-1 ring-primary/20',
         'has-data-[slot=card-footer]:pb-0 data-[size=sm]:gap-4 data-[size=sm]:py-4',
         className
       )}
@@ -148,7 +148,7 @@ function ForecastRangeBar({
       <div className="relative h-5">
         <div className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-white/[0.06]" />
         <div
-          className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-gradient-to-r from-primary/30 via-primary/60 to-primary/30"
+          className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-primary/45"
           style={{ left: `${pos(low)}%`, width: `${Math.max(pos(high) - pos(low), 1)}%` }}
         />
         {hasCurrent && (

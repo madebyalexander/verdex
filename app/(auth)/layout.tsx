@@ -27,7 +27,7 @@ const FEATURES = [
 function Brand() {
   return (
     <Link href="/" className="flex items-center gap-2.5">
-      <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary/40 to-primary/5 ring-1 ring-inset ring-primary/40">
+      <span className="flex size-9 items-center justify-center rounded-xl bg-primary inset-shadow-[0_1px_0_rgb(255_255_255/0.2)]">
         <Image
           src="/verdex-mark-white.svg"
           alt=""
@@ -51,11 +51,7 @@ export default function AuthLayout({
   return (
     <div className="flex min-h-svh flex-1">
       <aside className="relative hidden w-[44%] max-w-[620px] flex-col justify-between overflow-hidden border-r border-white/[0.06] bg-[#070709] p-12 lg:flex">
-        {/* Decorative only: brand glow, faint grid and an abstract trend line. */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_60%_at_20%_10%,color-mix(in_oklch,var(--primary)_28%,transparent)_0%,transparent_70%)]"
-        />
+        {/* Decorative only: faint grid and an abstract trend line. */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 opacity-[0.35] [background-image:linear-gradient(rgb(255_255_255/0.04)_1px,transparent_1px),linear-gradient(90deg,rgb(255_255_255/0.04)_1px,transparent_1px)] [background-size:48px_48px] [mask-image:radial-gradient(70%_60%_at_50%_40%,black,transparent)]"
@@ -64,28 +60,19 @@ export default function AuthLayout({
           aria-hidden
           viewBox="0 0 600 200"
           preserveAspectRatio="none"
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-28 w-full opacity-80"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-28 w-full text-primary"
         >
-          <defs>
-            <linearGradient id="auth-line" x1="0" x2="1" y1="0" y2="0">
-              <stop offset="0%" stopColor="#ad46ff" stopOpacity="0" />
-              <stop offset="60%" stopColor="#ad46ff" stopOpacity="0.9" />
-              <stop offset="100%" stopColor="#ad46ff" stopOpacity="0.4" />
-            </linearGradient>
-            <linearGradient id="auth-fill" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="#ad46ff" stopOpacity="0.18" />
-              <stop offset="100%" stopColor="#ad46ff" stopOpacity="0" />
-            </linearGradient>
-          </defs>
           <path
             d="M0 170 C 60 160, 90 120, 150 130 S 250 90, 300 100 S 390 40, 450 60 S 540 20, 600 10 L 600 200 L 0 200 Z"
-            fill="url(#auth-fill)"
+            fill="currentColor"
+            fillOpacity="0.07"
           />
           <path
             d="M0 170 C 60 160, 90 120, 150 130 S 250 90, 300 100 S 390 40, 450 60 S 540 20, 600 10"
             fill="none"
-            stroke="url(#auth-line)"
-            strokeWidth="2.5"
+            stroke="currentColor"
+            strokeWidth="2"
+            vectorEffect="non-scaling-stroke"
           />
         </svg>
 
@@ -102,9 +89,7 @@ export default function AuthLayout({
             <h1 className="text-4xl font-semibold leading-[1.1] tracking-tight xl:text-5xl">
               Invest with clarity,
               <br />
-              <span className="bg-gradient-to-r from-primary to-chart-1 bg-clip-text text-transparent">
-                not guesswork.
-              </span>
+              <span className="text-primary">not guesswork.</span>
             </h1>
             <p className="max-w-md text-base leading-relaxed text-muted-foreground">
               Verdex turns market data into transparent AI forecasts — so you

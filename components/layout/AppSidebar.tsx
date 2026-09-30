@@ -60,7 +60,7 @@ export function AppSidebar({ userEmail }: { userEmail: string }) {
                 />
               }
             >
-              <span className="relative flex size-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/35 to-primary/5 ring-1 ring-inset ring-primary/40">
+              <span className="relative flex size-8 shrink-0 items-center justify-center rounded-xl bg-primary inset-shadow-[0_1px_0_rgb(255_255_255/0.2)]">
                 <Image
                   src="/verdex-mark-white.svg"
                   alt=""
@@ -136,7 +136,7 @@ export function AppSidebar({ userEmail }: { userEmail: string }) {
                       />
                     }
                   >
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/40 text-xs font-semibold uppercase text-primary-foreground">
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold uppercase text-primary ring-1 ring-inset ring-primary/30">
                       {userEmail.slice(0, 1)}
                     </span>
                     <div className="grid min-w-0 flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">

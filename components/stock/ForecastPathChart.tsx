@@ -56,12 +56,6 @@ export function ForecastPathChart({
     >
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={data} margin={{ top: 16, right: 4, bottom: 0, left: 16 }}>
-          <defs>
-            <linearGradient id="forecast-band" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor={PRIMARY} stopOpacity={0.06} />
-              <stop offset="100%" stopColor={PRIMARY} stopOpacity={0.2} />
-            </linearGradient>
-          </defs>
           <XAxis
             dataKey="label"
             axisLine={false}
@@ -95,7 +89,8 @@ export function ForecastPathChart({
             dataKey="range"
             type="monotone"
             stroke="none"
-            fill="url(#forecast-band)"
+            fill={PRIMARY}
+            fillOpacity={0.14}
             isAnimationActive={false}
             activeDot={false}
           />

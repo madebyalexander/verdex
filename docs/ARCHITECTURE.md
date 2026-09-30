@@ -392,7 +392,7 @@ Implementation: a thin `cache(key, ttl, fetcher)` wrapper in `lib/cache.ts` — 
   - "Up" / positive change: `emerald-400` text + `emerald-500/10` bg + `ring-emerald-500/20`
   - "Down" / negative change: `rose-400` text + `rose-500/10` bg + `ring-rose-500/20`
   - Both encoded in [components/ui/change-badge.tsx](./components/ui/change-badge.tsx) — never inline these classes elsewhere; import `ChangeBadge` (pill), `ChangeText` (inline "+$2.31 (+1.24%)" next to large figures) or the `directionText` / `directionBg` helpers.
-- Background palette: `--background` `#0a0a0c` (near-black) / `--card` `#131316` / `--border` white at 8%. Surface elevation via the lighter card background plus a 1px top highlight (`surface-highlight` utility), not via heavy borders. AI surfaces add the `ai-glow` utility (soft brand-purple radial wash).
+- Background palette: `--background` `#0a0a0c` (near-black) / `--card` `#131316` / `--border` white at 8%. Surface elevation via the lighter card background plus a 1px top highlight (`surface-highlight` utility), not via heavy borders. AI surfaces use the `ai-surface` utility: a flat card faintly tinted purple with a crisp 1px purple top edge. The brand accent is drawn as solid fills, lines and marks, never as radial washes, glows or gradient text.
 - Data density: tabular numbers (`tabular-nums`) on all price, percentage, and metric values for proper alignment.
 - Formatting: all currency / compact-number / percent formatting MUST go through [lib/format.ts](./lib/format.ts) (`usd`, `compactUsd`, `compactNum`, `pct`). Do not define new `Intl.NumberFormat` instances at call sites.
 

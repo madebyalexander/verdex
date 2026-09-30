@@ -172,11 +172,28 @@
   }
 }
 
-/* Soft brand glow used behind AI-generated surfaces (forecasts, insights). */
-@utility ai-glow {
-  background-image:
-    radial-gradient(120% 90% at 0% 0%, color-mix(in oklch, var(--primary) 18%, transparent) 0%, transparent 60%),
-    radial-gradient(80% 60% at 100% 100%, color-mix(in oklch, var(--primary) 7%, transparent) 0%, transparent 70%);
+/*
+ * AI-generated surfaces (forecasts, insights): a flat card faintly tinted
+ * with the brand purple, marked by a crisp 1px purple edge along the top.
+ * The accent is a line, never a haze. Needs `relative overflow-hidden`.
+ */
+@utility ai-surface {
+  background-color: color-mix(in oklch, var(--primary) 5%, var(--card));
+  &::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 1px;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklch, var(--primary) 75%, white) 18%,
+      color-mix(in oklch, var(--primary) 75%, white) 82%,
+      transparent
+    );
+  }
 }
 
 /* 1px top highlight that makes dark cards read as lit from above. */

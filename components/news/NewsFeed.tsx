@@ -326,7 +326,7 @@ function FeaturedStory({
 }) {
   const m = SENTIMENT_META[article.sentiment]
   return (
-    <Card className="overflow-hidden py-0 bg-gradient-to-br from-primary/[0.08] via-card to-card ring-primary/20">
+    <Card className="overflow-hidden py-0">
       <CardContent className="flex flex-col gap-4 py-5">
         {/* Eyebrow */}
         <div className="flex items-center gap-2 text-xs">

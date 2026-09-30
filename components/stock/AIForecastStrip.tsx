@@ -27,7 +27,7 @@ export async function AIForecastStrip({
     <a
       href="#ai-forecast"
       aria-label={`AI 1-month outlook for ${symbol}: ${usd(horizon.base)}. Jump to the full forecast.`}
-      className="group ai-glow flex flex-wrap items-center gap-x-5 gap-y-3 rounded-2xl bg-card px-4 py-3 ring-1 ring-primary/25 transition-shadow hover:ring-primary/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="group ai-surface relative flex flex-wrap items-center gap-x-5 gap-y-3 overflow-hidden rounded-2xl px-4 py-3 ring-1 ring-primary/25 transition-shadow hover:ring-primary/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div className="flex items-center gap-3">
         <AIIcon className="size-9" />

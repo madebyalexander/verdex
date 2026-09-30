@@ -4,7 +4,7 @@ import { buttonVariants } from '@/components/ui/button'
 export default function NotFound() {
   return (
     <main className="flex min-h-svh flex-col items-center justify-center gap-5 p-6 text-center">
-      <p className="bg-gradient-to-b from-foreground to-foreground/20 bg-clip-text text-7xl font-semibold tracking-tight text-transparent tabular-nums">
+      <p className="text-7xl font-semibold tracking-tight text-foreground/25 tabular-nums">
         404
       </p>
       <div className="flex flex-col gap-2">
