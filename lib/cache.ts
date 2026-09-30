@@ -7,10 +7,20 @@ import { Redis } from '@upstash/redis'
 let client: Redis | null = null
 function getRedis(): Redis {
   if (!client) {
-    client = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL!,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-    })
+    const url = process.env.UPSTASH_REDIS_REST_URL
+    const token = process.env.UPSTASH_REDIS_REST_TOKEN
+    // Fail with an actionable message — an empty URL otherwise surfaces as
+    // the cryptic "Failed to parse URL from /pipeline" on the first request.
+    if (!url || !token) {
+      const missing = [
+        !url && 'UPSTASH_REDIS_REST_URL',
+        !token && 'UPSTASH_REDIS_REST_TOKEN',
+      ].filter(Boolean)
+      throw new Error(
+        `Upstash Redis is not configured: ${missing.join(' and ')} missing from .env.local. Copy both from your database's REST API section at console.upstash.com, then restart \`npm run dev\`.`
+      )
+    }
+    client = new Redis({ url, token })
   }
   return client
 }
